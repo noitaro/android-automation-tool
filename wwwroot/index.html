@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hello World!</title>
+    <title>アンドロイド自動操作ツール</title>
 
     <!-- Bootstrap -->
     <link rel="stylesheet" href="css/bootstrap.min.css">
@@ -105,7 +105,7 @@
                                             id="button-addon1">adb.exe の場所を選択</button>
                                     </div>
                                     <input type="text" class="form-control" placeholder="adb.exe の場所" readonly
-                                        data-bind="value: adbPath() == undefined ? '' : adbPath() + '\\adb.exe'"
+                                        data-bind="value: adbPath() == '' ? '' : adbPath() + '\\adb.exe'"
                                         aria-label="Example text with button addon" aria-describedby="button-addon1">
                                 </div>
                             </div>

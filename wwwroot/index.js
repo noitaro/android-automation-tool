@@ -330,8 +330,13 @@ categoryUpdate = () => {
 $(() => {
 
   // 初期化
-  indexViewModel.adbPath(store.get('adbPath'));
-  indexViewModel.images(JSON.parse(store.get('imagesJsonData')));
+  if (store.get('adbPath') != null && store.get('adbPath') != '') {
+    indexViewModel.adbPath(store.get('adbPath'));
+  }
+
+  if (store.get('imagesJsonData') != null && store.get('imagesJsonData') != '') {
+    indexViewModel.images(JSON.parse(store.get('imagesJsonData')));
+  }
 
   // カテゴリ更新
   categoryUpdate();

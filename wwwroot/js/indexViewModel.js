@@ -2,7 +2,7 @@ let indexViewModel = {
   images: ko.observableArray([]),
 
   running: ko.observable(false),
-  adbPath: ko.observable('adb.exe'),
+  adbPath: ko.observable(''),
   execLog: ko.observableArray([]),
 
   // 類似度の設定(0~1)
