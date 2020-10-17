@@ -61,7 +61,12 @@ class AdbManager {
 
     let buffer = null;
     try {
-      buffer = childProcess.execSync('"' + indexViewModel.adbPath() + '\\adb.exe" exec-out screencap -p');
+      buffer = childProcess.execSync(
+        '"' + indexViewModel.adbPath() + '\\adb.exe" exec-out screencap -p',
+        {
+          maxBuffer: 1024 * 1024 * 1024 // 1GB
+        });
+
     } catch (error) {
       buffer = Buffer.from('', 'base64');
       indexViewModel.ligWriteLine('失敗');
