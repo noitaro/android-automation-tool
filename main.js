@@ -17,7 +17,7 @@ function createWindow() {
   // 読込が終わったら画面を表示する
   win.once('ready-to-show', () => {
     win.show()
-    win.webContents.openDevTools();
+    // win.webContents.openDevTools();
   });
 }
 
