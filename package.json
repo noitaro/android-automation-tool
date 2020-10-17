@@ -1,0 +1,22 @@
+{
+  "name": "android-automation-tool",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "dependencies": {
+    "electron-rebuild": "^2.0.3",
+    "electron-store": "^6.0.0",
+    "google-closure-library": "^20200830.0.0",
+    "jimp": "^0.16.1",
+    "jquery-cropper": "^1.0.1"
+  },
+  "devDependencies": {
+    "electron": "^10.1.1"
+  },
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-packager ./ --platform=win32 --arch=x64 --icon=pineapple_emoticon_emoji_icon_152245.ico"
+  },
+  "author": "",
+  "license": "ISC"
+}

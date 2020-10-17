@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello World!</title>
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/cropper.css">
+    <link rel="stylesheet" href="css/highlight/default.css">
+    <script>
+        window.nodeRequire = require;
+        // delete window.require; コメント解除すると jQuery がコケる
+        delete window.exports;
+        delete window.module;
+    </script>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <span class="navbar-brand mb-0 h1">アンドロイド自動操作ツール</span>
+
+        <div class="d-flex ml-auto">
+            <button type="button" class="btn btn-primary"
+                data-bind="enable: running() == false && hasRunCodeButtonClicked(), click: executionClick">
+                <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-play-fill mt-n1" fill="currentColor"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z" />
+                </svg>
+                実行</button>
+            <button type="button" class="btn btn-primary"
+                data-bind="enable: running() == true && hasStopCodeButtonClicked(), click: stopClick">
+                <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-stop-fill mt-n1" fill="currentColor"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M5 3.5h6A1.5 1.5 0 0 1 12.5 5v6a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 11V5A1.5 1.5 0 0 1 5 3.5z" />
+                </svg>
+                停止</button>
+            <button type="button" class="btn btn-warning ml-1" data-toggle="modal"
+                data-bind="enable: running() == false && hasAutoSettingButtonClicked(), click: autoSettingClick">
+                <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-hammer mt-n1" fill="currentColor"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M9.812 1.952a.5.5 0 0 1-.312.89c-1.671 0-2.852.596-3.616 1.185L4.857 5.073V6.21a.5.5 0 0 1-.146.354L3.425 7.853a.5.5 0 0 1-.708 0L.146 5.274a.5.5 0 0 1 0-.706l1.286-1.29a.5.5 0 0 1 .354-.146H2.84C4.505 1.228 6.216.862 7.557 1.04a5.009 5.009 0 0 1 2.077.782l.178.129z" />
+                    <path fill-rule="evenodd"
+                        d="M6.012 3.5a.5.5 0 0 1 .359.165l9.146 8.646A.5.5 0 0 1 15.5 13L14 14.5a.5.5 0 0 1-.756-.056L4.598 5.297a.5.5 0 0 1 .048-.65l1-1a.5.5 0 0 1 .366-.147z" />
+                </svg>
+                自動操作設定</button>
+            <button type="button" class="btn btn-outline-success ml-1" data-toggle="modal"
+                data-bind="enable: running() == false && hasOtherButtonClicked(), click: otherClick">
+                <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-exclamation-square-fill mt-n1"
+                    fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd"
+                        d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2zm6 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" />
+                </svg>
+                ヘルプ</button>
+        </div>
+    </nav>
+    <div class="container-fluid">
+        <div class="row mt-3">
+            <div class="col-lg-8">
+                <div id="blocklyArea" style="background: #fc9;height: 30rem;"></div>
+            </div>
+            <div class="col-lg-4">
+                <div id="logArea" class="border overflow-auto" style="height: 15rem;" data-bind="foreach: execLog">
+                    <div class="p-2" data-bind="text: $data"></div>
+                </div>
+                <div class="text-center border mt-3" style="height: 14rem;">
+                    <img class="img-fluid rounded mx-auto mh-auto x-100 h-100 d-block"
+                        data-bind="attr: {src: captureSrc}"></img>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-lg-12">
+                <pre><code id="highlightCode"></code></pre>
+            </div>
+        </div>
+    </div>
+
+    <div id="blocklyDiv" style="position: absolute"></div>
+    <canvas id="hidden-canvas" style="display: none;"></canvas>
+
+    <!-- Modal -->
+    <div id="autoSettingModal" class="modal fade">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">自動操作設定</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <button class="btn btn-outline-primary" type="button"
+                                            data-bind="click: adbPathSettingClick, enable: hasAdbPathButtonClicked()"
+                                            id="button-addon1">adb.exe の場所を選択</button>
+                                    </div>
+                                    <input type="text" class="form-control" placeholder="adb.exe の場所" readonly
+                                        data-bind="value: adbPath() == undefined ? '' : adbPath() + '\\adb.exe'"
+                                        aria-label="Example text with button addon" aria-describedby="button-addon1">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-12"><button type="button"
+                                    data-bind="click: execScreencapClick, enable: hasExecScreencapClicked() && !trimmingMode()"
+                                    class="btn btn-outline-primary btn-block">アンドロイドのスクリーンショットを撮影</button></div>
+                        </div>
+                        <div class="row mt-1">
+                            <div class="col-md-12">
+                                <div class="text-center border " style="height: 25rem;">
+                                    <img id="canvasOutput" class="img-fluid rounded mx-auto mh-100 h-auto x-100 d-block"></img>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-1">
+                            <div class="col-md-12 col-lg-5">
+                                <div class="row">
+                                    <div class="col">
+                                        <div class="input-group input-group-sm">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">スクショのサイズ</span>
+                                            </div>
+                                            <input type="text" class="form-control text-right"
+                                                data-bind="value: screencapImageWidth">
+                                            <input type="text" class="form-control text-right"
+                                                data-bind="value: screencapImageHeight">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col">
+                                        <div class="input-group input-group-sm">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">マウスカーソルの位置</span>
+                                            </div>
+                                            <input type="text" class="form-control text-right"
+                                                data-bind="value: canvasXPos">
+                                            <input type="text" class="form-control text-right"
+                                                data-bind="value: canvasYPos">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-12 col-lg-6 ml-auto">
+                                <div class="row">
+                                    <div class="col">
+                                        <!-- ko ifnot: trimmingMode -->
+                                        <button type="button"
+                                            data-bind="click: trimmingClick, enable: hasTrimmingClicked()"
+                                            class="btn btn-outline-primary btn-block btn-sm">トリミング</button>
+                                        <!-- /ko -->
+                                        <!-- ko if: trimmingMode -->
+                                        <div class="btn-group btn-group-sm btn-block" role="group">
+                                            <button type="button"
+                                                data-bind="click: trimmingCancelClick, enable: hasTrimmingCancelClicked()"
+                                                class="btn btn-outline-danger">キャンセル</button>
+                                            <button type="button"
+                                                data-bind="click: trimmingFixedClick, enable: hasTrimmingFixedClicked()"
+                                                class="btn btn-outline-success">確定</button>
+                                        </div>
+                                        <!-- /ko -->
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col">
+                                        <button type="button"
+                                            data-bind="click: addListClick, enable: hasAddListClicked() && !trimmingMode()"
+                                            class="btn btn-outline-dark btn-block btn-sm">リストに追加</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <!-- ko foreach: images -->
+                            <div class="col-md-auto mb-1">
+                                <div class="card">
+                                    <div class="card-img-top border-bottom">
+                                        <img class="mx-auto mh-auto x-100 d-block" data-bind="attr: {src: src}"
+                                            style="max-width: 150px;">
+                                        <div class="card-img-overlay p-0">
+                                            <div class="dropdown text-right">
+                                                <button class="btn btn-sm dropdown-toggle btn-link" type="button"
+                                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                    設定
+                                                </button>
+                                                <div class="dropdown-menu">
+                                                    <!-- <a class="dropdown-item p-2" href="#"
+                                                        data-bind="click: $parent.removeListClick">画像保存</a> -->
+                                                    <a class="dropdown-item p-2" href="#"
+                                                        data-bind="click: $parent.removeListClick">リストから削除</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body p-2">
+                                        <p class="card-text" data-bind="text: name"></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- /ko -->
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <!-- <div class="btn-group" role="group" aria-label="Basic example">
+                        <button type="button" class="btn btn-success ml-1"
+                            data-bind="enable: running() == false && hasImportCodeButtonClicked(), click: loadClick">
+                            <svg width="1em" height="1em" viewBox="0 0 16 16"
+                                class="bi bi-file-earmark-arrow-down-fill mt-n1" fill="currentColor"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd"
+                                    d="M2 2a2 2 0 0 1 2-2h5.293A1 1 0 0 1 10 .293L13.707 4a1 1 0 0 1 .293.707V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2zm7 2l.5-2.5 3 3L10 5a1 1 0 0 1-1-1zm-.5 3.5a.5.5 0 0 0-1 0v3.793l-1.146-1.147a.5.5 0 0 0-.708.708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 11.293V7.5z" />
+                            </svg>
+                            インポート</button>
+                        <button type="button" class="btn btn-success"
+                            data-bind="enable: running() == false && hasExportCodeButtonClicked(), click: saveClick">
+                            <svg width="1em" height="1em" viewBox="0 0 16 16"
+                                class="bi bi-file-earmark-arrow-up-fill mt-n1" fill="currentColor"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd"
+                                    d="M2 2a2 2 0 0 1 2-2h5.293A1 1 0 0 1 10 .293L13.707 4a1 1 0 0 1 .293.707V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2zm7 2l.5-2.5 3 3L10 5a1 1 0 0 1-1-1zM6.354 9.854a.5.5 0 0 1-.708-.708l2-2a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 8.707V12.5a.5.5 0 0 1-1 0V8.707L6.354 9.854z" />
+                            </svg>
+                            エクスポート</button>
+                    </div> -->
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">閉じる</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="otherModal" class="modal fade">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">ヘルプ</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h2>
+                                    アンドロイド自動操作ツールについて
+                                </h2>
+                                <p>
+                                    <a href="#"
+                                        onClick="urlopen('https://developers.google.com/blockly')">Blockly</a>（ブロックベースのビジュアルプログラミング）を使って、アンドロイドを自動操作出来るようにしました。
+                                </p>
+                                <p>
+                                    詳しい使い方は <a href="#" onClick="urlopen('https://noitalog.tokyo/')">ブログ</a> を御覧ください。
+                                </p>
+                                <p>
+                                    不具合報告や要望等は <a href="#" onClick="urlopen('https://twitter.com/so_noita')">Twitter</a>
+                                    にお願い致します。
+                                </p>
+                                <h2>
+                                    バージョン情報
+                                </h2>
+                                <p>v1.0.0 2020-10-11</p>
+                                <h2>ライセンス</h2>
+                                <h3>Electron</h3>
+                                <h2>免責事項</h2>
+                                <p>当ツールによって生じた損害等の一切の責任を負いかねますのでご了承ください。</p>
+                                <p>常識の範囲内でのご利用をお願い致します。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">閉じる</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <xml xmlns="https://developers.google.com/blockly/xml" id="toolbox" style="display: none">
+        <category name="ロジック" colour="#5b80a5">
+            <block type="logic_boolean">
+                <field name="BOOL">TRUE</field>
+            </block>
+        </category>
+        <category name="繰り返し処理" colour="#5ba55b">
+            <block type="controls_repeat_ext">
+                <value name="TIMES">
+                    <shadow type="math_number">
+                        <field name="NUM">10</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="controls_whileUntil">
+                <field name="MODE">WHILE</field>
+            </block>
+            <block type="controls_flow_statements">
+                <field name="FLOW">BREAK</field>
+            </block>
+        </category>
+        <sep></sep>
+        <category name="自動操作" colour="65">
+            <block type="screen_capture"></block>
+            <block type="tap"></block>
+            <block type="sleep"></block>
+        </category>
+        <category name="画像ブロック" colour="65" toolboxitemid="imageBlock">
+        </category>
+    </xml>
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="js/jquery-3.5.1.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="js/popper.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+
+    <script src="js/cropper.js"></script>
+    <script src="js/jquery-cropper.js"></script>
+
+    <script src="js/highlight/highlight.pack.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script src="js/knockoutjs/knockout-3.5.1.js"></script>
+    <script src="js/knockoutjs/knockout.mapping-latest.js"></script>
+
+    <script src="js/acorn_interpreter.js"></script>
+    <script src="google-blockly/blockly_compressed.js"></script>
+    <script src="google-blockly/blocks_compressed.js"></script>
+    <script src="google-blockly/javascript_compressed.js"></script>
+
+    <script src="custom_block.js"></script>
+    <script src="field_image_serializable.js"></script>
+    <script src="ja.js"></script>
+    <script src="index.js"></script>
+</body>
+
+</html>
