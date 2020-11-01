@@ -62,6 +62,9 @@ let indexViewModel = {
   hasAddListClicked: ko.observable(true),
   // リストから削除ボタン
   removeListClick: removeListClicked,
+  // 設定フォルダを開くボタン
+  openSettingFolderClick: openSettingFolderButtonClicked,
+  hasOpenSettingFolderButtonClicked: ko.observable(true),
 
   logClear: () => indexViewModel.execLog([]),
   ligWriteLine: text => indexViewModel.execLog.push(text),

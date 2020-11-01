@@ -8,7 +8,6 @@ goog.require('Blockly.FieldImage');
 goog.require('Blockly.fieldRegistry');
 goog.require('Blockly.utils');
 goog.require('Blockly.utils.object');
-let fs = require('fs');
 
 Blockly.FieldImageSerializable = function (opt_value) {
   let image = indexViewModel.getImage(opt_value);

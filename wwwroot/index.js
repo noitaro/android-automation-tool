@@ -1,4 +1,5 @@
 const Store = require('electron-store');
+const fs = require('fs');
 const store = new Store();
 
 const AdbManager = require('./js/AdbManager');
@@ -100,7 +101,7 @@ function runCodeButtonClicked() {
   })();
 
   // 連打対策
-  setTimeout(() => indexViewModel.hasRunCodeButtonClicked(true), 100);
+  setTimeout(() => indexViewModel.hasRunCodeButtonClicked(true), 500);
 }
 // 停止ボタン
 function stopCodeButtonClicked() {
@@ -110,7 +111,7 @@ function stopCodeButtonClicked() {
   indexViewModel.running(false);
 
   // 連打対策
-  setTimeout(() => indexViewModel.hasStopCodeButtonClicked(true), 100);
+  setTimeout(() => indexViewModel.hasStopCodeButtonClicked(true), 500);
 }
 // 読込ボタン
 function importCodeButtonClicked() {
@@ -118,7 +119,7 @@ function importCodeButtonClicked() {
 
 
   // 連打対策
-  setTimeout(() => indexViewModel.hasImportCodeButtonClicked(true), 100);
+  setTimeout(() => indexViewModel.hasImportCodeButtonClicked(true), 500);
 }
 // 保存ボタン
 function exportCodeButtonClicked() {
@@ -144,11 +145,10 @@ function exportCodeButtonClicked() {
   let base64 = canvas.toDataURL();
   console.log(base64);
 
-  let fs = require('fs');
   fs.writeFile(filePath, base64, err => console.log(err));
 
   // 連打対策
-  setTimeout(() => indexViewModel.hasExportCodeButtonClicked(true), 100);
+  setTimeout(() => indexViewModel.hasExportCodeButtonClicked(true), 500);
 }
 // 自動操作設定ボタン
 function autoSettingButtonClicked() {
@@ -157,7 +157,7 @@ function autoSettingButtonClicked() {
   indexViewModel.autoSettingModal(true);
 
   // 連打対策
-  setTimeout(() => indexViewModel.hasAutoSettingButtonClicked(true), 100);
+  setTimeout(() => indexViewModel.hasAutoSettingButtonClicked(true), 500);
 }
 // ヘルプボタン
 function otherButtonClicked() {
@@ -166,7 +166,7 @@ function otherButtonClicked() {
   indexViewModel.otherModal(true);
 
   // 連打対策
-  setTimeout(() => indexViewModel.hasOtherButtonClicked(true), 100);
+  setTimeout(() => indexViewModel.hasOtherButtonClicked(true), 500);
 }
 // adbパス設定ボタン
 function adbPathButtonClicked() {
@@ -182,14 +182,13 @@ function adbPathButtonClicked() {
 
   if (filePath?.length > 0) {
     // 存在確認
-    const fs = require('fs');
     if (fs.existsSync(filePath[0] + '\\adb.exe')) {
       indexViewModel.adbPath(filePath[0]);
     }
   }
 
   // 連打対策
-  setTimeout(() => indexViewModel.hasAdbPathButtonClicked(true), 100);
+  setTimeout(() => indexViewModel.hasAdbPathButtonClicked(true), 500);
 }
 // スクショ取得ボタン
 function execScreencapClicked() {
@@ -197,15 +196,20 @@ function execScreencapClicked() {
 
   const binaryData = AdbManager.adbExecScreencap();
   if (binaryData.length == 0) {
-    alert('スクリーンショットの取得に失敗しました。アンドロイドの接続を確認して下さい。');
+    if (fs.existsSync(indexViewModel.adbPath() + '\\adb.exe')) {
+      alert('スクリーンショットの取得に失敗しました。アンドロイドの接続を確認して下さい。');
+    } else {
+      alert('adb.exe が見つかりませんでした。adb.exe の場所を確認して下さい。');
+    }
+  }
+  else {
+    let base64String = binaryData.toString('base64');
+    base64String = 'data:image/png;base64,' + base64String;
+    $('#canvasOutput').attr('src', base64String);
   }
 
-  let base64String = binaryData.toString('base64');
-  base64String = 'data:image/png;base64,' + base64String;
-  $('#canvasOutput').attr('src', base64String);
-
   // 連打対策
-  setTimeout(() => indexViewModel.hasExecScreencapClicked(true), 100);
+  setTimeout(() => indexViewModel.hasExecScreencapClicked(true), 500);
 }
 // トリミング開始ボタン
 function trimmingClicked() {
@@ -222,7 +226,7 @@ function trimmingClicked() {
   }
 
   // 連打対策
-  setTimeout(() => indexViewModel.hasTrimmingClicked(true), 100);
+  setTimeout(() => indexViewModel.hasTrimmingClicked(true), 500);
 }
 // トリミングキャンセルボタン
 function trimmingCancelClicked() {
@@ -233,7 +237,7 @@ function trimmingCancelClicked() {
   indexViewModel.trimmingMode(false);
 
   // 連打対策
-  setTimeout(() => indexViewModel.hasTrimmingCancelClicked(true), 100);
+  setTimeout(() => indexViewModel.hasTrimmingCancelClicked(true), 500);
 }
 // トリミング確定ボタン
 function trimmingFixedClicked() {
@@ -248,7 +252,7 @@ function trimmingFixedClicked() {
   document.getElementById('canvasOutput').src = dataURL;
 
   // 連打対策
-  setTimeout(() => indexViewModel.hasTrimmingFixedClicked(true), 100);
+  setTimeout(() => indexViewModel.hasTrimmingFixedClicked(true), 500);
 }
 // リストに追加ボタン
 function addListClicked() {
@@ -271,11 +275,21 @@ function addListClicked() {
   }
 
   // 連打対策
-  setTimeout(() => indexViewModel.hasAddListClicked(true), 100);
+  setTimeout(() => indexViewModel.hasAddListClicked(true), 500);
 }
 // リストから削除ボタン
 function removeListClicked(data) {
   indexViewModel.images.remove(data);
+}
+// 設定フォルダを開くボタン
+function openSettingFolderButtonClicked() {
+  indexViewModel.hasOpenSettingFolderButtonClicked(false);
+
+  let { app, BrowserWindow } = require('electron').remote;
+  console.log(app.getPath('userData'));
+
+  // 連打対策
+  setTimeout(() => indexViewModel.hasOpenSettingFolderButtonClicked(true), 500);
 }
 // Knockout から呼ばれる↑
 

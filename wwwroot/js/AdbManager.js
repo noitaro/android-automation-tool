@@ -97,6 +97,8 @@ class AdbManager {
 
     dst.delete();
     mask.delete();
+    dst = null;
+    mask = null;
 
     // 類似度確認
     if (indexViewModel.threshold() > result.maxVal) {
