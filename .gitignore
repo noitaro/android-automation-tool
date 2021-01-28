@@ -1,2 +1,3 @@
 node_modules
-android-automation-tool_*
+android-automation-tool-*
+package-lock.json

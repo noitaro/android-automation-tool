@@ -29,6 +29,8 @@ class AdbManager {
     let rect = this.getRectangleFromMatchTemplate(screenshotMat, templateMat);
     if (rect == null) {
       indexViewModel.ligWriteLine(imgName + ' 画像は見つからなかった。');
+      templateMat.delete();
+      screenshotMat.delete();
       return;
     }
 
@@ -97,8 +99,6 @@ class AdbManager {
 
     dst.delete();
     mask.delete();
-    dst = null;
-    mask = null;
 
     // 類似度確認
     if (indexViewModel.threshold() > result.maxVal) {
