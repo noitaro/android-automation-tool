@@ -4,7 +4,12 @@
 )]
 
 use std::process::Command;
-use base64::{encode,decode};
+use base64::{encode, decode};
+use std::fs::File;
+use std::io::{Read, Write};
+use image::{GenericImageView, ImageBuffer};
+use image::io::Reader as ImageReader;
+use std::fs;
 
 #[tauri::command]
 fn my_custom_command1() {
@@ -28,7 +33,7 @@ async fn adb_screencap_command(adb: String) -> Result<String, String> {
     .output()
     .expect("Failed to execute command");
 
-  let encode_bin : String = encode(&output.stdout);
+  let encode_bin: String = encode(&output.stdout);
   Ok(encode_bin)
 }
 
@@ -48,6 +53,23 @@ async fn my_custom_command4(invoke_message: String) -> Result<String, String> {
   }
 }
 
+#[tauri::command]
+async fn setting_file_write_command(content: String) -> Result<(), String> {
+  let mut file = File::create("foo.txt").expect("failed to create file");
+  file.write_all(b"Hello, world!");
+  Ok(())
+}
+
+#[tauri::command]
+async fn img_save_command(base64: String, file_name: String) -> Result<(), String> {
+  fs::create_dir("img");
+
+  let buffer = decode(base64).unwrap();
+  let img = image::load_from_memory(&buffer).unwrap();
+  image::DynamicImage::save(&img, format!("{}{}{}", "./img/", file_name, ".png"));
+  Ok(())
+}
+
 fn main() {
   tauri::Builder::default()
     .invoke_handler(tauri::generate_handler![
@@ -56,6 +78,8 @@ fn main() {
       adb_screencap_command, 
       my_custom_command3, 
       my_custom_command4,
+      setting_file_write_command,
+      img_save_command,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

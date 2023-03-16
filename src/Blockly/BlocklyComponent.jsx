@@ -23,7 +23,6 @@
 
 import React from 'react';
 import './BlocklyComponent.css';
-import { useEffect, useRef } from 'react';
 
 import Blockly from 'blockly/core';
 import { javascriptGenerator } from 'blockly/javascript';
@@ -35,9 +34,9 @@ Blockly.setLocale(locale);
 function BlocklyComponent(props) {
   const { initialXml, children, ...rest } = props;
 
-  const blocklyDiv = useRef();
-  const toolbox = useRef();
-  let primaryWorkspace = useRef();
+  const blocklyDiv = React.useRef();
+  const toolbox = React.useRef();
+  let primaryWorkspace = React.useRef();
 
   const generateCode = () => {
     var code = javascriptGenerator.workspaceToCode(
@@ -47,7 +46,7 @@ function BlocklyComponent(props) {
   }
 
   const didLogRef = React.useRef(false);
-  useEffect(() => {
+  React.useEffect(() => {
     // In this case, whether we are mounting or remounting,
     // we use a ref so that we only log an impression once.
     if (didLogRef.current == false) {

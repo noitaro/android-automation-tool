@@ -6,6 +6,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import StopIcon from '@mui/icons-material/Stop';
 import SettingsDialogComponent from './SettingsDialogComponent';
+import { tauri } from '@tauri-apps/api';
 
 import BlocklyComponent, { Block, Value, Field, Shadow } from './Blockly';
 import './blocks/customblocks';
@@ -13,6 +14,20 @@ import './generator/generator';
 
 function App() {
   const [open, setOpen] = React.useState(false);
+
+  const didLogRef = React.useRef(false);
+  React.useEffect(() => {
+    // In this case, whether we are mounting or remounting,
+    // we use a ref so that we only log an impression once.
+    if (didLogRef.current == false) {
+      didLogRef.current = true;
+
+      
+      // (async() => {
+      //   await tauri.invoke('setting_file_write_command', { content: "aaa" });
+      // })()
+    }
+  }, []);
 
   return (
     <>

@@ -20,6 +20,7 @@
     "@types/react-dom": "^18.0.11",
     "blockly": "^9.2.1",
     "react": "^18.2.0",
+    "react-cropper": "^2.3.2",
     "react-datepicker": "^4.10.0",
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",
