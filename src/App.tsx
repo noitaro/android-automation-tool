@@ -12,8 +12,11 @@ import BlocklyComponent, { Block, Value, Field, Shadow } from './Blockly';
 import './blocks/customblocks';
 import './generator/generator';
 
+import Interpreter from 'js-interpreter';
+
 function App() {
   const [open, setOpen] = React.useState(false);
+  const [running, setRunning] = React.useState(false);
 
   const didLogRef = React.useRef(false);
   React.useEffect(() => {
@@ -22,12 +25,24 @@ function App() {
     if (didLogRef.current == false) {
       didLogRef.current = true;
 
-      
+
       // (async() => {
       //   await tauri.invoke('setting_file_write_command', { content: "aaa" });
       // })()
     }
   }, []);
+
+  const clickedExecute = () => {
+    setRunning(true);
+
+    const myInterpreter = new Interpreter('2 * 2');
+    console.log(myInterpreter);
+    
+  }
+
+  const clickedStop = () => {
+    setRunning(false);
+  }
 
   return (
     <>
@@ -37,9 +52,11 @@ function App() {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>アンドロイド自動操作ツール</Typography>
-          <Button variant="contained" disableElevation color="secondary" startIcon={<SettingsIcon />} sx={{ ml: 1 }} onClick={() => {setOpen(true);}}>自動操作設定</Button>
-          <Button variant="contained" disableElevation color="primary" startIcon={<PlayArrowIcon />} sx={{ ml: 1 }}>実行</Button>
-          <Button variant="contained" disableElevation color="primary" startIcon={<StopIcon />} sx={{ ml: 1 }}>停止</Button>
+          <Button variant="contained" disableElevation color="secondary" startIcon={<SettingsIcon />} sx={{ ml: 1 }} onClick={() => { setOpen(true); }}>自動操作設定</Button>
+          {running ? 
+            <Button variant="contained" disableElevation color="primary" startIcon={<StopIcon />} sx={{ ml: 1 }} onClick={clickedStop}>停止</Button> : 
+            <Button variant="contained" disableElevation color="primary" startIcon={<PlayArrowIcon />} sx={{ ml: 1 }} onClick={clickedExecute}>実行</Button>
+          }
         </Toolbar>
       </AppBar>
       <BlocklyComponent readOnly={false}

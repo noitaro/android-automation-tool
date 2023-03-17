@@ -21,6 +21,38 @@ const Transition = React.forwardRef(function Transition(
 export default function SettingsDialogComponent(props: { open: boolean, setOpen: React.Dispatch<React.SetStateAction<boolean>> }) {
   const { open, setOpen } = props;
 
+  const didLogRef = React.useRef(false);
+  React.useEffect(() => {
+    // In this case, whether we are mounting or remounting,
+    // we use a ref so that we only log an impression once.
+    if (didLogRef.current == false) {
+      didLogRef.current = true;
+
+
+      (async () => {
+        const filesJson: string = await tauri.invoke('img_get_file_name_command');
+        const files: string[] = JSON.parse(filesJson);
+        files.sort(((a, b) => {
+          if (a < b) return 1;
+          if (a > b) return -1;
+          return 0;
+        }));
+        console.log(files);
+        
+        const readedImgs: ImageModel[] = [];
+        for (const fileName of files) {
+          const fileSrc: string = await tauri.invoke('img_get_file_src_command', { fileName: fileName });
+          const imageModel = new ImageModel();
+          imageModel.name = fileName;
+          imageModel.src = `data:image/png;base64,${fileSrc}`;
+          readedImgs.push(imageModel);
+        }
+
+        setImgs(readedImgs);
+      })()
+    }
+  }, []);
+
   const clickedScreenCapture = async () => {
     const adb = new AdbManager("D:\\Program Files\\Nox\\bin\\adb.exe");
     // const aa = await adb.devices();
@@ -38,7 +70,7 @@ export default function SettingsDialogComponent(props: { open: boolean, setOpen:
   const clickedSaveRectangle = async () => {
     const img = cropperComponentRef.current?.getCropImg();
     if (img != null) {
-      
+
       // 末尾の番号取得
       const num = Number(imgs[0]?.name.replace('data', '') ?? 0);
 

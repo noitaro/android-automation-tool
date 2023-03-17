@@ -39,9 +39,7 @@ function BlocklyComponent(props) {
   let primaryWorkspace = React.useRef();
 
   const generateCode = () => {
-    var code = javascriptGenerator.workspaceToCode(
-      primaryWorkspace.current
-    );
+    var code = javascriptGenerator.workspaceToCode(primaryWorkspace.current);
     console.log(code);
   }
 
@@ -52,14 +50,8 @@ function BlocklyComponent(props) {
     if (didLogRef.current == false) {
       didLogRef.current = true;
 
-      primaryWorkspace.current = Blockly.inject(
-        blocklyDiv.current,
-        {
-          toolbox: toolbox.current,
-          ...rest
-        },
-      );
-  
+      primaryWorkspace.current = Blockly.inject(blocklyDiv.current, { toolbox: toolbox.current, ...rest },);
+
       if (initialXml) {
         Blockly.Xml.domToWorkspace(Blockly.Xml.textToDom(initialXml), primaryWorkspace.current);
       }
