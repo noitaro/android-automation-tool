@@ -16,7 +16,7 @@ import { InterpreterInit } from "./JSInterpreter";
 
 import hljs from 'highlight.js/lib/core';
 import javascript from 'highlight.js/lib/languages/javascript';
-import 'highlight.js/styles/github.css';
+import 'highlight.js/styles/atom-one-light.css';
 hljs.registerLanguage('javascript', javascript);
 
 let interpreterRunning = false;
@@ -177,7 +177,7 @@ function App() {
           </Value>
         </Block>
       </BlocklyComponent>
-      <Box style={{ "position": "absolute", "bottom": "0px", "width": "100%", "height": "200px", "overflow": "scroll" }}>
+      <Box style={{ "position": "absolute", "bottom": "0px", "width": "100%", "height": "200px", "overflow": "auto" }}>
         <pre style={{"margin": "0px"}}><code>{code}</code></pre>
       </Box>
       <SettingsDialogComponent open={open} setOpen={setOpen} />
