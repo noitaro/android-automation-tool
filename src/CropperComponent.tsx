@@ -10,7 +10,6 @@ export const CropperComponent = React.forwardRef((props: { src: string }, ref) =
   const { src } = props;
   const cropperRef = React.useRef<ReactCropperElement>(null);
 
-
   React.useImperativeHandle(ref, () => ({
     getCropImg() {
       const cropper = cropperRef.current?.cropper;

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { ChangeEventHandler } from "react";
 import { AppBar, Box, Button, Card, CardActionArea, CardContent, CardMedia, Dialog, Divider, IconButton, List, ListItem, ListItemText, Slide, Stack, TextField, Toolbar, Typography } from "@mui/material";
 import Grid from '@mui/material/Unstable_Grid2';
 import CloseIcon from '@mui/icons-material/Close';
@@ -8,6 +8,7 @@ import { AdbManager } from "./AdbManager";
 import { CropperComponent, CropperComponentHandles } from "./CropperComponent";
 import { ImageModel } from "./ImageModel";
 import { tauri } from '@tauri-apps/api';
+import { SettingModel } from "./SettingModel";
 
 const Transition = React.forwardRef(function Transition(
   props: TransitionProps & {
@@ -20,6 +21,7 @@ const Transition = React.forwardRef(function Transition(
 
 export default function SettingsDialogComponent(props: { open: boolean, setOpen: React.Dispatch<React.SetStateAction<boolean>> }) {
   const { open, setOpen } = props;
+  const [adbPath, setAdbPath] = React.useState("");
 
   const didLogRef = React.useRef(false);
   React.useEffect(() => {
@@ -28,6 +30,11 @@ export default function SettingsDialogComponent(props: { open: boolean, setOpen:
     if (didLogRef.current == false) {
       didLogRef.current = true;
 
+      (async () => {
+        const settingJson: string = await tauri.invoke('setting_file_read_command');
+        const setting: SettingModel = JSON.parse(settingJson);
+        setAdbPath(setting.adbPath);
+      })();
 
       (async () => {
         const filesJson: string = await tauri.invoke('img_get_file_name_command');
@@ -38,7 +45,7 @@ export default function SettingsDialogComponent(props: { open: boolean, setOpen:
           return 0;
         }));
         console.log(files);
-        
+
         const readedImgs: ImageModel[] = [];
         for (const fileName of files) {
           const fileSrc: string = await tauri.invoke('img_get_file_src_command', { fileName: fileName });
@@ -49,7 +56,7 @@ export default function SettingsDialogComponent(props: { open: boolean, setOpen:
         }
 
         setImgs(readedImgs);
-      })()
+      })();
     }
   }, []);
 
@@ -84,6 +91,13 @@ export default function SettingsDialogComponent(props: { open: boolean, setOpen:
     }
   }
 
+  const inputFileRef = React.useRef(null);
+  const changedInputFile = (event: any) => {
+    const file: File = event.target.files[0];
+    console.log(file.name);
+    setAdbPath(file.name);
+  };
+
   return (
     <Dialog fullScreen open={open} onClose={() => { setOpen(false); }} TransitionComponent={Transition}>
       <AppBar sx={{ position: 'relative' }}>
@@ -97,10 +111,10 @@ export default function SettingsDialogComponent(props: { open: boolean, setOpen:
       <Stack spacing={2} sx={{ m: 1 }}>
         <Grid container spacing={0}>
           <Grid xs="auto">
-            <Button variant="contained" component="label" disableElevation startIcon={<AdbIcon />}>adb.exe を選択<input hidden accept=".exe" type="file" /></Button>
+            <Button variant="contained" component="label" disableElevation startIcon={<AdbIcon />}>adb.exe を選択<input hidden accept=".exe" type="file" ref={inputFileRef} onChange={changedInputFile} /></Button>
           </Grid>
           <Grid xs>
-            <TextField variant="outlined" size="small" fullWidth InputProps={{ readOnly: true, }} />
+            <TextField value={adbPath} variant="outlined" size="small" fullWidth InputProps={{ readOnly: true, }} />
           </Grid>
         </Grid>
         <Button variant="contained" disableElevation onClick={clickedScreenCapture}>アンドロイドのスクリーンショットを取得</Button>

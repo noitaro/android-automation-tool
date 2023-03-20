@@ -8,7 +8,7 @@ import StopIcon from '@mui/icons-material/Stop';
 import SettingsDialogComponent from './SettingsDialogComponent';
 import { tauri } from '@tauri-apps/api';
 
-import BlocklyComponent, { Block, Value, Field, Shadow, Category } from './Blockly';
+import { Block, Value, Field, Shadow, Category } from './Blockly';
 import './blocks/customblocks';
 import './generator/generator';
 
@@ -17,6 +17,9 @@ import { InterpreterInit } from "./JSInterpreter";
 import hljs from 'highlight.js/lib/core';
 import javascript from 'highlight.js/lib/languages/javascript';
 import 'highlight.js/styles/atom-one-light.css';
+import { BlocklyComponent, BlocklyComponentHandles } from './Blockly/BlocklyComponent';
+import { LoadingButton } from '@mui/lab';
+import { SettingModel } from './SettingModel';
 hljs.registerLanguage('javascript', javascript);
 
 let interpreterRunning = false;
@@ -24,7 +27,7 @@ let interpreterRunning = false;
 function App() {
   const [open, setOpen] = React.useState(false);
   const [running, setRunning] = React.useState(false);
-  const [code, setCode] = React.useState('alert("1");' + "\n" + 'alert("2");' + "\n" + 'alert("3");' + "\n" + 'alert("4");' + "\n" + 'alert("5");' + "\n" + 'alert("5");' + "\n" + 'alert("5");' + "\n" + 'alert("5");' + "\n" + 'alert("5");' + "\n" + 'alert("5");');
+  const [code, setCode] = React.useState('');
 
   const didLogRef = React.useRef(false);
   React.useEffect(() => {
@@ -35,48 +38,45 @@ function App() {
 
       hljs.initHighlighting();
 
-      // (async() => {
-      //   await tauri.invoke('setting_file_write_command', { content: "aaa" });
-      // })()
+      (async () => {
+        const settingJson: string = await tauri.invoke('setting_file_read_command');
+        const setting: SettingModel = JSON.parse(settingJson);
+        await tauri.invoke('setting_file_write_command', { contents: JSON.stringify(setting) });
+      })();
     }
   }, []);
 
+  const blocklyComponentRef = React.useRef<BlocklyComponentHandles>(null);
+
   const clickedExecute = async () => {
-    console.log("clickedExecute1: 開始 ", interpreterRunning);
     setRunning(true);
     interpreterRunning = true;
 
-    //@ts-ignore
-    const myInterpreter = new Interpreter('alert("1");alert("2");alert("3");alert("4");alert("5");', InterpreterInit);
-    // myInterpreter.run();
+    const code = blocklyComponentRef.current?.generateCode();
+    if (code == null) return;
+    setCode(code);
 
-    console.log("clickedExecute2: 開始 ", interpreterRunning);
+    //@ts-ignore
+    const myInterpreter = new Interpreter(code, InterpreterInit);
+
     try {
-      console.log("clickedExecute3: 開始 ", interpreterRunning);
       while (interpreterRunning == true && myInterpreter.step()) {
-        // console.log("clickedExecute4: 開始 ", interpreterRunning);
-        // sleep
         await new Promise(resolve => setTimeout(resolve, 10));
-        // console.log("clickedExecute4: 終了 ", interpreterRunning);
       }
-      console.log("clickedExecute3: 終了 ", interpreterRunning);
     } catch (error) {
       console.error(error);
     }
     finally {
-      // demoWorkspace.highlightBlock(null);
       setRunning(false);
       interpreterRunning = false;
     }
-    console.log("clickedExecute2: 終了 ", interpreterRunning);
-
-    console.log("clickedExecute1: 終了 ", interpreterRunning);
   }
 
   const clickedStop = () => {
     setRunning(false);
     interpreterRunning = false;
   }
+
 
   return (
     <>
@@ -87,18 +87,16 @@ function App() {
           </IconButton>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>アンドロイド自動操作ツール</Typography>
           <Button variant="contained" disableElevation color="secondary" startIcon={<SettingsIcon />} sx={{ ml: 1 }} onClick={() => { setOpen(true); }}>自動操作設定</Button>
-          {running ?
-            <Button variant="contained" disableElevation color="primary" startIcon={<StopIcon />} sx={{ ml: 1 }} onClick={clickedStop}>停止</Button> :
-            <Button variant="contained" disableElevation color="primary" startIcon={<PlayArrowIcon />} sx={{ ml: 1 }} onClick={clickedExecute}>実行</Button>
-          }
+          <LoadingButton variant="contained" disableElevation color="success" startIcon={<PlayArrowIcon />} sx={{ ml: 1 }} onClick={clickedExecute} disabled={running} loading={running}>実行</LoadingButton>
+          <Button variant="contained" disableElevation color="error" startIcon={<StopIcon />} sx={{ ml: 1 }} onClick={clickedStop} disabled={!running}>停止</Button>
         </Toolbar>
       </AppBar>
-      <BlocklyComponent readOnly={false}
+      <BlocklyComponent ref={blocklyComponentRef} setCode={setCode} readOnly={false}
         trashcan={true} media={'media/'} sounds={false}
         grid={{ spacing: 20, length: 1, colour: '#888', snap: false }}
         move={{ scrollbars: true, drag: true, wheel: true }}
         zoom={{ controls: true, wheel: false, startScale: 1, maxScale: 3, minScale: 0.3, scaleSpeed: 1.2 }}
-        initialXml={`<xml xmlns="http://www.w3.org/1999/xhtml"><block type="controls_ifelse" x="0" y="0"></block></xml>`}>
+        initialXml={`<xml xmlns="http://www.w3.org/1999/xhtml"><block type="controls_ifelse" x="10" y="10"></block></xml>`}>
         <Category name="Logic" colour="#5b80a5">
           <Block type="controls_if"></Block>
           <Block type="logic_compare">
@@ -150,35 +148,38 @@ function App() {
             <Field name="FLOW">BREAK</Field>
           </Block>
         </Category>
+        <Category name="自動操作" colour="65">
+          <Block type="screencap_field" />
+          <Block type="test_react_field" />
+          <Block type="test_react_date_field" />
+          <Block type="controls_ifelse" />
+          <Block type="logic_compare" />
+          <Block type="logic_operation" />
+          <Block type="controls_repeat_ext">
+            <Value name="TIMES">
+              <Shadow type="math_number">
+                <Field name="NUM">10</Field>
+              </Shadow>
+            </Value>
+          </Block>
+          <Block type="logic_operation" />
+          <Block type="logic_negate" />
+          <Block type="logic_boolean" />
+          <Block type="logic_null" disabled="true" />
+          <Block type="logic_ternary" />
+          <Block type="text_charAt">
+            <Value name="VALUE">
+              <Block type="variables_get">
+                <Field name="VAR">text</Field>
+              </Block>
+            </Value>
+          </Block>
+        </Category>
         <Category name="Variables" colour="#a55b80" custom="VARIABLE"></Category>
         <Category name="Functions" colour="#995ba5" custom="PROCEDURE"></Category>
-        <Block type="test_react_field" />
-        <Block type="test_react_date_field" />
-        <Block type="controls_ifelse" />
-        <Block type="logic_compare" />
-        <Block type="logic_operation" />
-        <Block type="controls_repeat_ext">
-          <Value name="TIMES">
-            <Shadow type="math_number">
-              <Field name="NUM">10</Field>
-            </Shadow>
-          </Value>
-        </Block>
-        <Block type="logic_operation" />
-        <Block type="logic_negate" />
-        <Block type="logic_boolean" />
-        <Block type="logic_null" disabled="true" />
-        <Block type="logic_ternary" />
-        <Block type="text_charAt">
-          <Value name="VALUE">
-            <Block type="variables_get">
-              <Field name="VAR">text</Field>
-            </Block>
-          </Value>
-        </Block>
       </BlocklyComponent>
       <Box style={{ "position": "absolute", "bottom": "0px", "width": "100%", "height": "200px", "overflow": "auto" }}>
-        <pre style={{"margin": "0px"}}><code>{code}</code></pre>
+        <pre style={{ "margin": "0px" }}><code>{code}</code></pre>
       </Box>
       <SettingsDialogComponent open={open} setOpen={setOpen} />
     </>

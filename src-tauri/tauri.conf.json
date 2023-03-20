@@ -13,18 +13,17 @@
   "tauri": {
     "allowlist": {
       "all": true,
+      "dialog": {
+        "all": true,
+        "open": true,
+        "save": true
+      },
       "shell": {
         "all": true,
         "execute": true,
         "sidecar": true,
         "open": true,
-        "scope": [
-          {
-            "name": "run-adb-screencap",
-            "cmd": "adb",
-            "args": ["exec-out","screencap","-p"]
-          }
-        ]
+        "scope": []
       }
     },
     "bundle": {

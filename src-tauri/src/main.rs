@@ -54,9 +54,19 @@ async fn my_custom_command4(invoke_message: String) -> Result<String, String> {
 }
 
 #[tauri::command]
-async fn setting_file_write_command(content: String) -> Result<(), String> {
-  let mut file = File::create("foo.txt").expect("failed to create file");
-  file.write_all(b"Hello, world!").unwrap();
+async fn setting_file_read_command() -> Result<String, String> {
+  let mut file = File::open("setting.json").unwrap();
+  let mut contents = String::new();
+  file.read_to_string(&mut contents).unwrap();
+  println!("読み込んだ文字列: {}", contents);
+  Ok(contents)
+}
+
+#[tauri::command]
+async fn setting_file_write_command(contents: String) -> Result<(), String> {
+  let mut file = File::create("setting.json").expect("failed to create file");
+  file.write_all(contents.as_bytes()).unwrap();
+  println!("書き込んだ文字列: {}", contents);
   Ok(())
 }
 
@@ -127,6 +137,7 @@ fn main() {
       adb_screencap_command, 
       my_custom_command3, 
       my_custom_command4,
+      setting_file_read_command,
       setting_file_write_command,
       img_save_command,
       img_get_file_name_command,
