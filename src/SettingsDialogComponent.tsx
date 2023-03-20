@@ -1,5 +1,5 @@
-import React, { ChangeEventHandler } from "react";
-import { AppBar, Box, Button, Card, CardActionArea, CardContent, CardMedia, Dialog, Divider, IconButton, List, ListItem, ListItemText, Slide, Stack, TextField, Toolbar, Typography } from "@mui/material";
+import React from "react";
+import { AppBar, Box, Button, Card, CardActionArea, CardMedia, Dialog, IconButton, Slide, Stack, TextField, Toolbar, Typography } from "@mui/material";
 import Grid from '@mui/material/Unstable_Grid2';
 import CloseIcon from '@mui/icons-material/Close';
 import AdbIcon from '@mui/icons-material/Adb';
@@ -9,6 +9,7 @@ import { CropperComponent, CropperComponentHandles } from "./CropperComponent";
 import { ImageModel } from "./ImageModel";
 import { tauri } from '@tauri-apps/api';
 import { SettingModel } from "./SettingModel";
+import { open } from '@tauri-apps/api/dialog';
 
 const Transition = React.forwardRef(function Transition(
   props: TransitionProps & {
@@ -19,8 +20,8 @@ const Transition = React.forwardRef(function Transition(
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
-export default function SettingsDialogComponent(props: { open: boolean, setOpen: React.Dispatch<React.SetStateAction<boolean>> }) {
-  const { open, setOpen } = props;
+export default function SettingsDialogComponent(props: { openDialog: boolean, setOpen: React.Dispatch<React.SetStateAction<boolean>> }) {
+  const { openDialog, setOpen } = props;
   const [adbPath, setAdbPath] = React.useState("");
 
   const didLogRef = React.useRef(false);
@@ -91,15 +92,25 @@ export default function SettingsDialogComponent(props: { open: boolean, setOpen:
     }
   }
 
-  const inputFileRef = React.useRef(null);
-  const changedInputFile = (event: any) => {
-    const file: File = event.target.files[0];
-    console.log(file.name);
-    setAdbPath(file.name);
+  const clickedFileOpenDialog = async () => {
+    // Open a selection dialog for image files
+    const selected = await open({ multiple: false, title: "adb.exe を選択", defaultPath: "adb.exe", filters: [{ name: 'アプリケーション', extensions: ['exe'] }] });
+    if (Array.isArray(selected)) {
+      // user selected multiple files
+    } else if (selected === null) {
+      // user cancelled the selection
+    } else {
+      // user selected a single file
+      setAdbPath(selected);
+      const settingJson: string = await tauri.invoke('setting_file_read_command');
+      const setting: SettingModel = JSON.parse(settingJson);
+      setting.adbPath = selected;
+      await tauri.invoke('setting_file_write_command', { contents: JSON.stringify(setting) });
+    }
   };
 
   return (
-    <Dialog fullScreen open={open} onClose={() => { setOpen(false); }} TransitionComponent={Transition}>
+    <Dialog fullScreen open={openDialog} onClose={() => { setOpen(false); }} TransitionComponent={Transition}>
       <AppBar sx={{ position: 'relative' }}>
         <Toolbar>
           <IconButton edge="start" color="inherit" onClick={() => { setOpen(false); }} aria-label="close">
@@ -111,7 +122,7 @@ export default function SettingsDialogComponent(props: { open: boolean, setOpen:
       <Stack spacing={2} sx={{ m: 1 }}>
         <Grid container spacing={0}>
           <Grid xs="auto">
-            <Button variant="contained" component="label" disableElevation startIcon={<AdbIcon />}>adb.exe を選択<input hidden accept=".exe" type="file" ref={inputFileRef} onChange={changedInputFile} /></Button>
+            <Button variant="contained" component="label" disableElevation startIcon={<AdbIcon />} onClick={clickedFileOpenDialog}>adb.exe を選択</Button>
           </Grid>
           <Grid xs>
             <TextField value={adbPath} variant="outlined" size="small" fullWidth InputProps={{ readOnly: true, }} />

@@ -181,7 +181,7 @@ function App() {
       <Box style={{ "position": "absolute", "bottom": "0px", "width": "100%", "height": "200px", "overflow": "auto" }}>
         <pre style={{ "margin": "0px" }}><code>{code}</code></pre>
       </Box>
-      <SettingsDialogComponent open={open} setOpen={setOpen} />
+      <SettingsDialogComponent openDialog={open} setOpen={setOpen} />
     </>
   );
 }
