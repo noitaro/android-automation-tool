@@ -6,8 +6,8 @@ export interface CropperComponentHandles {
   getCropImg(): { src: string } | null;
 }
 
-export const CropperComponent = React.forwardRef((props: { src: string }, ref) => {
-  const { src } = props;
+export const CropperComponent = React.forwardRef((props: { src: string, height: string, width: string, }, ref) => {
+  const { src, height, width } = props;
   const cropperRef = React.useRef<ReactCropperElement>(null);
 
   React.useImperativeHandle(ref, () => ({
@@ -15,7 +15,6 @@ export const CropperComponent = React.forwardRef((props: { src: string }, ref) =
       const cropper = cropperRef.current?.cropper;
       const canvas = cropper?.getCroppedCanvas();
       if (canvas == null) return null;
-
       return { src: canvas.toDataURL() };
     }
   }));
@@ -23,7 +22,7 @@ export const CropperComponent = React.forwardRef((props: { src: string }, ref) =
   return (
     <Cropper
       src={src}
-      style={{ height: 400, width: "100%" }}
+      style={{ height: height, width: width }}
       // Cropper.js options
       initialAspectRatio={16 / 9}
       // guides={false}

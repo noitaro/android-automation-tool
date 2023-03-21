@@ -130,7 +130,7 @@ export default function SettingsDialogComponent(props: { openDialog: boolean, se
         </Grid>
         <Button variant="contained" disableElevation onClick={clickedScreenCapture}>アンドロイドのスクリーンショットを取得</Button>
         <Box sx={{ border: "solid 1px rgba(0, 0, 0, 0.23)" }}>
-          <CropperComponent ref={cropperComponentRef} src={imgSrc} />
+          <CropperComponent ref={cropperComponentRef} src={imgSrc} height="400px" width="100%" />
         </Box>
         <Button variant="contained" disableElevation onClick={clickedSaveRectangle}>選択範囲を保存する</Button>
       </Stack>

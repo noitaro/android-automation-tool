@@ -12,14 +12,14 @@ import { Block, Value, Field, Shadow, Category } from './Blockly';
 import './blocks/customblocks';
 import './generator/generator';
 
-import { InterpreterInit } from "./JSInterpreter";
-
 import hljs from 'highlight.js/lib/core';
 import javascript from 'highlight.js/lib/languages/javascript';
 import 'highlight.js/styles/atom-one-light.css';
 import { BlocklyComponent, BlocklyComponentHandles } from './Blockly/BlocklyComponent';
 import { LoadingButton } from '@mui/lab';
 import { SettingModel } from './SettingModel';
+import { CropperComponent, CropperComponentHandles } from './CropperComponent';
+import { AdbManager } from './AdbManager';
 hljs.registerLanguage('javascript', javascript);
 
 let interpreterRunning = false;
@@ -41,12 +41,34 @@ function App() {
       (async () => {
         const settingJson: string = await tauri.invoke('setting_file_read_command');
         const setting: SettingModel = JSON.parse(settingJson);
-        await tauri.invoke('setting_file_write_command', { contents: JSON.stringify(setting) });
       })();
     }
   }, []);
 
   const blocklyComponentRef = React.useRef<BlocklyComponentHandles>(null);
+
+  const InterpreterInit = (interpreter: any, globalObject: any) => {
+    const adb = new AdbManager("D:\\Program Files\\Nox\\bin\\adb.exe");
+
+    const aapo = interpreter.nativeToPseudo({});
+    interpreter.setProperty(globalObject, 'aapo', aapo);
+    interpreter.setProperty(aapo, 'screencap', interpreter.createAsyncFunction(async (callback: any) => {
+      console.log("screencap: S");
+      const screencap = await adb.getScreencap();
+      setImgSrc(`data:image/png;base64,${screencap}`);
+      console.log("screencap: E");
+      callback();
+    }));
+    interpreter.setProperty(aapo, 'sleep', interpreter.createAsyncFunction(async (timeout: number, callback: any) => {
+      console.log("sleep: S");
+      await new Promise((resolve) => setTimeout(resolve, (timeout * 1000)));
+      console.log("sleep: E");
+      callback();
+    }));
+
+
+    interpreter.setProperty(globalObject, 'alert', interpreter.createNativeFunction((message: any) => window.alert(message)));
+  }
 
   const clickedExecute = async () => {
     setRunning(true);
@@ -77,7 +99,10 @@ function App() {
     interpreterRunning = false;
   }
 
+  const cropperComponentRef = React.useRef<CropperComponentHandles>(null);
+  const [imgSrc, setImgSrc] = React.useState("data:image/png;base64,");
 
+  const imgBlockCategoryRef = React.useRef(null);
   return (
     <>
       <AppBar position="static">
@@ -96,7 +121,7 @@ function App() {
         grid={{ spacing: 20, length: 1, colour: '#888', snap: false }}
         move={{ scrollbars: true, drag: true, wheel: true }}
         zoom={{ controls: true, wheel: false, startScale: 1, maxScale: 3, minScale: 0.3, scaleSpeed: 1.2 }}
-        initialXml={`<xml xmlns="http://www.w3.org/1999/xhtml"><block type="controls_ifelse" x="10" y="10"></block></xml>`}>
+        initialXml={`<xml><block type="screencap_field" x="10" y="10"></block></xml>`}>
         <Category name="Logic" colour="#5b80a5">
           <Block type="controls_if"></Block>
           <Block type="logic_compare">
@@ -148,8 +173,20 @@ function App() {
             <Field name="FLOW">BREAK</Field>
           </Block>
         </Category>
+        <Category name="Math" colour="#5b67a5">
+          <Block type="math_number">
+            <Field name="NUM">0</Field>
+          </Block>
+        </Category>
         <Category name="自動操作" colour="65">
           <Block type="screencap_field" />
+          <Block type="sleep_field">
+            <Value name="NAME">
+              <Block type="math_number">
+                <Field name="NUM">3</Field>
+              </Block>
+            </Value>
+          </Block>
           <Block type="test_react_field" />
           <Block type="test_react_date_field" />
           <Block type="controls_ifelse" />
@@ -175,9 +212,13 @@ function App() {
             </Value>
           </Block>
         </Category>
+        <Category name="画像ブロック" colour="65" ref={imgBlockCategoryRef}></Category>
         <Category name="Variables" colour="#a55b80" custom="VARIABLE"></Category>
         <Category name="Functions" colour="#995ba5" custom="PROCEDURE"></Category>
       </BlocklyComponent>
+      <div style={{ "position": "absolute", "right": "0px", "width": "30%", "height": "calc(100% - 264px)", "display": "flex" }}>
+        <img src={imgSrc} style={{ "maxHeight": "100%", "maxWidth": "100%", "margin": "auto" }} />
+      </div>
       <Box style={{ "position": "absolute", "bottom": "0px", "width": "100%", "height": "200px", "overflow": "auto" }}>
         <pre style={{ "margin": "0px" }}><code>{code}</code></pre>
       </Box>

@@ -28,13 +28,18 @@ import * as Blockly from 'blockly/core';
 import { javascriptGenerator } from 'blockly/javascript';
 
 javascriptGenerator['test_react_field'] = function (block) {
-    return 'console.log(\'custom block\');\n';
+  return 'console.log(\'custom block\');\n';
 };
 
 javascriptGenerator['test_react_date_field'] = function (block) {
-    return 'console.log(' + block.getField('DATE').getText() + ');\n';
+  return 'console.log(' + block.getField('DATE').getText() + ');\n';
 };
 
 javascriptGenerator['screencap_field'] = function (block) {
-    return 'aapo.screencap();\n';
+  return 'aapo.screencap();\n';
+};
+
+javascriptGenerator['sleep_field'] = function (block) {
+  const name = javascriptGenerator.valueToCode(block, 'NAME', javascriptGenerator.ORDER_ATOMIC);
+  return 'aapo.sleep(' + name + ');\n';
 };

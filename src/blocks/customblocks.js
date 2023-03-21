@@ -75,16 +75,33 @@ Blockly.Blocks['test_react_field'] = {
   }
 };
 
-const screencapField = {
-  "type": "screencap_field",
-  "message0": "アンドロイドのスクリーンショットを取得",
-  "previousStatement": null,
-  "nextStatement": null,
-  "colour": 65,
-};
-
 Blockly.Blocks['screencap_field'] = {
   init: function () {
-    this.jsonInit(screencapField);
+    this.jsonInit({
+      "type": "screencap_field",
+      "message0": "アンドロイドのスクリーンショットを取得",
+      "previousStatement": null,
+      "nextStatement": null,
+      "colour": 65,
+    });
+  }
+};
+
+Blockly.Blocks['sleep_field'] = {
+  init: function () {
+    this.jsonInit({
+      "type": "sleep_field",
+      "message0": "%1 秒間停止",
+      "args0": [
+        {
+          "type": "input_value",
+          "name": "NAME",
+          "check": "Number"
+        },
+      ],
+      "previousStatement": null,
+      "nextStatement": null,
+      "colour": 65,
+    });
   }
 };
