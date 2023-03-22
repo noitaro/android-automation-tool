@@ -20,9 +20,12 @@ const Transition = React.forwardRef(function Transition(
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
-export default function SettingsDialogComponent(props: { openDialog: boolean, setOpen: React.Dispatch<React.SetStateAction<boolean>> }) {
-  const { openDialog, setOpen } = props;
-  const [adbPath, setAdbPath] = React.useState("");
+export default function SettingsDialogComponent(props: {
+  openDialog: boolean, setOpen: React.Dispatch<React.SetStateAction<boolean>>,
+  imgs: ImageModel[], setImgs: React.Dispatch<React.SetStateAction<ImageModel[]>>,
+  adbPath: string, setAdbPath: React.Dispatch<React.SetStateAction<string>>,
+}) {
+  const { openDialog, setOpen, imgs, setImgs, adbPath, setAdbPath } = props;
 
   const didLogRef = React.useRef(false);
   React.useEffect(() => {
@@ -31,48 +34,19 @@ export default function SettingsDialogComponent(props: { openDialog: boolean, se
     if (didLogRef.current == false) {
       didLogRef.current = true;
 
-      (async () => {
-        const settingJson: string = await tauri.invoke('setting_file_read_command');
-        const setting: SettingModel = JSON.parse(settingJson);
-        setAdbPath(setting.adbPath);
-      })();
-
-      (async () => {
-        const filesJson: string = await tauri.invoke('img_get_file_name_command');
-        const files: string[] = JSON.parse(filesJson);
-        files.sort(((a, b) => {
-          if (a < b) return 1;
-          if (a > b) return -1;
-          return 0;
-        }));
-        console.log(files);
-
-        const readedImgs: ImageModel[] = [];
-        for (const fileName of files) {
-          const fileSrc: string = await tauri.invoke('img_get_file_src_command', { fileName: fileName });
-          const imageModel = new ImageModel();
-          imageModel.name = fileName;
-          imageModel.src = `data:image/png;base64,${fileSrc}`;
-          readedImgs.push(imageModel);
-        }
-
-        setImgs(readedImgs);
-      })();
     }
   }, []);
 
   const clickedScreenCapture = async () => {
-    const adb = new AdbManager("D:\\Program Files\\Nox\\bin\\adb.exe");
+    const adb = new AdbManager(adbPath);
     // const aa = await adb.devices();
     const screencap = await adb.getScreencap();
     if (screencap != null) {
       setImgSrc(`data:image/png;base64,${screencap}`);
     }
-    // const aa = await adb.screencap("D:\Program Files\Nox\bin\adb.exe");
   }
 
   const [imgSrc, setImgSrc] = React.useState("data:image/png;base64,");
-  const [imgs, setImgs] = React.useState<ImageModel[]>([]);
 
   const cropperComponentRef = React.useRef<CropperComponentHandles>(null);
   const clickedSaveRectangle = async () => {

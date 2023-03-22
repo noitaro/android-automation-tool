@@ -30,50 +30,48 @@ import * as Blockly from 'blockly/core';
 // Since we're using json to initialize the field, we'll need to import it.
 import '../fields/BlocklyReactField';
 import '../fields/DateField';
+import '../fields/ImageSerializableField';
+import '../fields/NoneDisplayField';
 
 import '@blockly/field-date';
 
-let reactDateField = {
-  "type": "test_react_date_field",
-  "message0": "date field: %1",
-  "args0": [
-    {
-      "type": "field_date",
-      "name": "DATE",
-      "date": "2020-02-20"
-    }
-  ],
-  "previousStatement": null,
-  "nextStatement": null,
+Blockly.Blocks['test_react_field'] = {
+  init: function () {
+    this.jsonInit({
+      "type": "test_react_field",
+      "message0": "custom field %1",
+      "args0": [
+        {
+          "type": "field_react_component",
+          "name": "FIELD",
+          "text": "Click me"
+        },
+      ],
+      "previousStatement": null,
+      "nextStatement": null,
+    });
+    this.setStyle('loop_blocks');
+  }
 };
 
 Blockly.Blocks['test_react_date_field'] = {
   init: function () {
-    this.jsonInit(reactDateField);
+    this.jsonInit({
+      "type": "test_react_date_field",
+      "message0": "date field: %1",
+      "args0": [
+        {
+          "type": "field_date",
+          "name": "DATE",
+          "date": "2020-02-20"
+        }
+      ],
+      "previousStatement": null,
+      "nextStatement": null,
+    });
     this.setStyle('loop_blocks');
   }
 }
-
-var testReactField = {
-  "type": "test_react_field",
-  "message0": "custom field %1",
-  "args0": [
-    {
-      "type": "field_react_component",
-      "name": "FIELD",
-      "text": "Click me"
-    },
-  ],
-  "previousStatement": null,
-  "nextStatement": null,
-};
-
-Blockly.Blocks['test_react_field'] = {
-  init: function () {
-    this.jsonInit(testReactField);
-    this.setStyle('loop_blocks');
-  }
-};
 
 Blockly.Blocks['screencap_field'] = {
   init: function () {
@@ -102,6 +100,38 @@ Blockly.Blocks['sleep_field'] = {
       "previousStatement": null,
       "nextStatement": null,
       "colour": 65,
+    });
+  }
+};
+
+Blockly.Blocks['image_serializable_field'] = {
+  init: function () {
+    this.jsonInit({
+      "type": "image_serializable_field",
+      "message0": "%1 %2 %3",
+      "args0": [
+        {
+          "type": "field_image_serializable",
+          "name": "IMG",
+          "text": null,
+          "width": 21,
+          "height": 21,
+        },
+        {
+          "type": "field_label_serializable",
+          "name": "NAME",
+          "text": "data1"
+        },
+        {
+          "type": "field_none_display",
+          "name": "PATH",
+          "text": "ccc"
+        }
+      ],
+      "output": "aapoImg",
+      "colour": 65,
+      "tooltip": "",
+      "helpUrl": ""
     });
   }
 };

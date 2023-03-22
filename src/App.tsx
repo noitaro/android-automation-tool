@@ -1,6 +1,5 @@
 import React from 'react';
 import { AppBar, Box, Button, IconButton, Toolbar, Typography } from '@mui/material';
-import Grid from '@mui/material/Unstable_Grid2';
 import MenuIcon from '@mui/icons-material/Menu';
 import SettingsIcon from '@mui/icons-material/Settings';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
@@ -8,7 +7,7 @@ import StopIcon from '@mui/icons-material/Stop';
 import SettingsDialogComponent from './SettingsDialogComponent';
 import { tauri } from '@tauri-apps/api';
 
-import { Block, Value, Field, Shadow, Category } from './Blockly';
+import { Block, Value, Field, Shadow, Category, Sep } from './Blockly';
 import './blocks/customblocks';
 import './generator/generator';
 
@@ -18,8 +17,9 @@ import 'highlight.js/styles/atom-one-light.css';
 import { BlocklyComponent, BlocklyComponentHandles } from './Blockly/BlocklyComponent';
 import { LoadingButton } from '@mui/lab';
 import { SettingModel } from './SettingModel';
-import { CropperComponent, CropperComponentHandles } from './CropperComponent';
+import { CropperComponentHandles } from './CropperComponent';
 import { AdbManager } from './AdbManager';
+import { ImageModel } from './ImageModel';
 hljs.registerLanguage('javascript', javascript);
 
 let interpreterRunning = false;
@@ -28,6 +28,8 @@ function App() {
   const [open, setOpen] = React.useState(false);
   const [running, setRunning] = React.useState(false);
   const [code, setCode] = React.useState('');
+  const [adbPath, setAdbPath] = React.useState("");
+  const [imgs, setImgs] = React.useState<ImageModel[]>([]);
 
   const didLogRef = React.useRef(false);
   React.useEffect(() => {
@@ -41,14 +43,56 @@ function App() {
       (async () => {
         const settingJson: string = await tauri.invoke('setting_file_read_command');
         const setting: SettingModel = JSON.parse(settingJson);
+        setAdbPath(setting.adbPath);
       })();
+
+      (async () => {
+        const filesJson: string = await tauri.invoke('img_get_file_name_command');
+        const files: string[] = JSON.parse(filesJson);
+        files.sort(((a, b) => {
+          if (a < b) return 1;
+          if (a > b) return -1;
+          return 0;
+        }));
+        console.log(files);
+
+        const readedImgs: ImageModel[] = [];
+        for (const fileName of files) {
+          const fileSrc: string = await tauri.invoke('img_get_file_src_command', { fileName: fileName });
+          const imageModel = new ImageModel();
+          imageModel.name = fileName;
+          imageModel.path = `./img/${fileName}.png`;
+          imageModel.src = `data:image/png;base64,${fileSrc}`;
+          readedImgs.push(imageModel);
+        }
+
+        setImgs(readedImgs);
+      })();
+
     }
   }, []);
+
+  React.useEffect(() => {
+    // 画像ブロックカテゴリの更新
+    const imgBlockCategory = blocklyComponentRef.current?.getWorkspace().getToolbox().getToolboxItemById('imgBlockCategory');
+    
+    const contents: any[] = [];
+
+    for (const img of imgs) {
+      const block = {
+        "kind": "block",
+        "blockxml": `<block type="image_serializable_field"><field name="IMG">${img.src}</field><field name="NAME">${img.name}</field><field name="PATH">${img.path}</field></block>`
+      };
+      contents.push(block);
+    }
+    
+    imgBlockCategory.updateFlyoutContents(contents);
+  }, [imgs]);
 
   const blocklyComponentRef = React.useRef<BlocklyComponentHandles>(null);
 
   const InterpreterInit = (interpreter: any, globalObject: any) => {
-    const adb = new AdbManager("D:\\Program Files\\Nox\\bin\\adb.exe");
+    const adb = new AdbManager(adbPath);
 
     const aapo = interpreter.nativeToPseudo({});
     interpreter.setProperty(globalObject, 'aapo', aapo);
@@ -102,7 +146,6 @@ function App() {
   const cropperComponentRef = React.useRef<CropperComponentHandles>(null);
   const [imgSrc, setImgSrc] = React.useState("data:image/png;base64,");
 
-  const imgBlockCategoryRef = React.useRef(null);
   return (
     <>
       <AppBar position="static">
@@ -178,6 +221,7 @@ function App() {
             <Field name="NUM">0</Field>
           </Block>
         </Category>
+        <Sep></Sep>
         <Category name="自動操作" colour="65">
           <Block type="screencap_field" />
           <Block type="sleep_field">
@@ -212,7 +256,8 @@ function App() {
             </Value>
           </Block>
         </Category>
-        <Category name="画像ブロック" colour="65" ref={imgBlockCategoryRef}></Category>
+        <Category name="画像ブロック" colour="65" toolboxitemid="imgBlockCategory"></Category>
+        <Sep></Sep>
         <Category name="Variables" colour="#a55b80" custom="VARIABLE"></Category>
         <Category name="Functions" colour="#995ba5" custom="PROCEDURE"></Category>
       </BlocklyComponent>
@@ -222,7 +267,7 @@ function App() {
       <Box style={{ "position": "absolute", "bottom": "0px", "width": "100%", "height": "200px", "overflow": "auto" }}>
         <pre style={{ "margin": "0px" }}><code>{code}</code></pre>
       </Box>
-      <SettingsDialogComponent openDialog={open} setOpen={setOpen} />
+      <SettingsDialogComponent openDialog={open} setOpen={setOpen} imgs={imgs} setImgs={setImgs} adbPath={adbPath} setAdbPath={setAdbPath} />
     </>
   );
 }

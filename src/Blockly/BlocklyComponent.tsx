@@ -33,6 +33,7 @@ Blockly.setLocale(locale);
 
 export interface BlocklyComponentHandles {
   generateCode(): string;
+  getWorkspace(): any;
 }
 
 export const BlocklyComponent = React.forwardRef((props: any, ref) => {
@@ -40,7 +41,7 @@ export const BlocklyComponent = React.forwardRef((props: any, ref) => {
 
   const blocklyDiv = React.useRef<any>();
   const toolbox = React.useRef<any>();
-  let primaryWorkspace = React.useRef<any>();
+  const primaryWorkspace = React.useRef<any>();
 
   const didLogRef = React.useRef(false);
   React.useEffect(() => {
@@ -65,7 +66,10 @@ export const BlocklyComponent = React.forwardRef((props: any, ref) => {
     generateCode() {
       const code: string = javascriptGenerator.workspaceToCode(primaryWorkspace.current);
       return code;
-    }
+    },
+    getWorkspace() {
+      return primaryWorkspace.current;
+    },
   }));
 
   return (

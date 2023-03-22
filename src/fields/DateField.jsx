@@ -52,10 +52,7 @@ class ReactDateField extends BlocklyReactField {
   }
 
   render() {
-    return <DatePicker
-        selected={this.value_}
-        onChange={this.onDateSelected_}
-        inline />
+    return <DatePicker selected={this.value_} onChange={this.onDateSelected_} inline />
   }
 }
 

@@ -43,3 +43,8 @@ javascriptGenerator['sleep_field'] = function (block) {
   const name = javascriptGenerator.valueToCode(block, 'NAME', javascriptGenerator.ORDER_ATOMIC);
   return 'aapo.sleep(' + name + ');\n';
 };
+
+javascriptGenerator['image_serializable_field'] = function (block) {
+  const name = block.getField('PATH').getText();
+  return [name, javascriptGenerator.ORDER_ATOMIC];
+};
