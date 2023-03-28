@@ -130,8 +130,25 @@ Blockly.Blocks['image_serializable_field'] = {
       ],
       "output": "aapoImg",
       "colour": 65,
-      "tooltip": "",
-      "helpUrl": ""
+    });
+  }
+};
+
+Blockly.Blocks['image_touchscreen_field'] = {
+  init: function () {
+    this.jsonInit({
+      "type": "image_touchscreen_field",
+      "message0": "%1 この画像が画面にあればタップ",
+      "args0": [
+        {
+          "type": "input_value",
+          "name": "NAME",
+          "check": "aapoImg"
+        }
+      ],
+      "previousStatement": null,
+      "nextStatement": null,
+      "colour": 65,
     });
   }
 };

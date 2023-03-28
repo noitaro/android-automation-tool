@@ -75,8 +75,8 @@ function App() {
   React.useEffect(() => {
     // 画像ブロックカテゴリの更新
     const imgBlockCategory = blocklyComponentRef.current?.getWorkspace().getToolbox().getToolboxItemById('imgBlockCategory');
-    
-    const contents: any[] = [];
+
+    const contents: { kind: string; blockxml: string; }[] = [];
 
     for (const img of imgs) {
       const block = {
@@ -85,7 +85,7 @@ function App() {
       };
       contents.push(block);
     }
-    
+
     imgBlockCategory.updateFlyoutContents(contents);
   }, [imgs]);
 
@@ -109,6 +109,13 @@ function App() {
       console.log("sleep: E");
       callback();
     }));
+    interpreter.setProperty(aapo, 'touchImg', interpreter.createAsyncFunction(async (imgPath: string, callback: any) => {
+      console.log("touchImg: S");
+      const result: boolean = await adb.touchscreenImg(imgPath);
+      console.log("touchImg: E");
+      callback(result);
+    }));
+
 
 
     interpreter.setProperty(globalObject, 'alert', interpreter.createNativeFunction((message: any) => window.alert(message)));
@@ -231,6 +238,7 @@ function App() {
               </Block>
             </Value>
           </Block>
+          <Block type="image_touchscreen_field" />
           <Block type="test_react_field" />
           <Block type="test_react_date_field" />
           <Block type="controls_ifelse" />

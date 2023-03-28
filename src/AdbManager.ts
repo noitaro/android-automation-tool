@@ -39,4 +39,14 @@ export class AdbManager {
       return null;
     }
   }
+
+  touchscreenImg = async (imgPath: string) => {
+    try {
+      const result: boolean = await tauri.invoke('adb_touchscreen_img_command', { adb: this.adb, imgPath: imgPath });
+      return result;
+    } catch (error) {
+      console.log(error);
+      return false;
+    }
+  }
 }
