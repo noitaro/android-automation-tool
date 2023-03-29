@@ -68,7 +68,7 @@ export default function SettingsDialogComponent(props: {
 
   const clickedFileOpenDialog = async () => {
     // Open a selection dialog for image files
-    const selected = await open({ multiple: false, title: "adb.exe を選択", defaultPath: "adb.exe", filters: [{ name: 'アプリケーション', extensions: ['exe'] }] });
+    const selected = await open({ multiple: false, title: "adb を選択", defaultPath: "adb" });
     if (Array.isArray(selected)) {
       // user selected multiple files
     } else if (selected === null) {
@@ -96,7 +96,7 @@ export default function SettingsDialogComponent(props: {
       <Stack spacing={2} sx={{ m: 1 }}>
         <Grid container spacing={0}>
           <Grid xs="auto">
-            <Button variant="contained" component="label" disableElevation startIcon={<AdbIcon />} onClick={clickedFileOpenDialog}>adb.exe を選択</Button>
+            <Button variant="contained" component="label" disableElevation startIcon={<AdbIcon />} onClick={clickedFileOpenDialog}>adb を選択</Button>
           </Grid>
           <Grid xs>
             <TextField value={adbPath} variant="outlined" size="small" fullWidth InputProps={{ readOnly: true, }} />
