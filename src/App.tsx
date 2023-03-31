@@ -7,6 +7,8 @@ import StopIcon from '@mui/icons-material/Stop';
 import SettingsDialogComponent from './SettingsDialogComponent';
 import { tauri } from '@tauri-apps/api';
 
+import Blockly from 'blockly/core';
+import { javascriptGenerator } from 'blockly/javascript';
 import { Block, Value, Field, Shadow, Category, Sep } from './Blockly';
 import './blocks/customblocks';
 import './generator/generator';
@@ -27,8 +29,9 @@ let interpreterRunning = false;
 function App() {
   const [open, setOpen] = React.useState(false);
   const [running, setRunning] = React.useState(false);
-  const [code, setCode] = React.useState('');
+  const [javaScriptCode, setJavaScriptCode] = React.useState('');
   const [adbPath, setAdbPath] = React.useState("");
+  const [initialXml, setInitialXml] = React.useState("");
   const [imgs, setImgs] = React.useState<ImageModel[]>([]);
 
   const didLogRef = React.useRef(false);
@@ -44,6 +47,7 @@ function App() {
         const settingJson: string = await tauri.invoke('setting_file_read_command');
         const setting: SettingModel = JSON.parse(settingJson);
         setAdbPath(setting.adbPath);
+        setInitialXml(setting.xml);
       })();
 
       (async () => {
@@ -72,9 +76,35 @@ function App() {
     }
   }, []);
 
+  // JavaScriptコードが変わったら、ファイル保存
+  const [javaScriptCodeTimeout, setJavaScriptCodeTimeout] = React.useState<NodeJS.Timeout | null>(null);
+  React.useEffect(() => {
+    if (javaScriptCodeTimeout != null) {
+      clearTimeout(javaScriptCodeTimeout);
+      setJavaScriptCodeTimeout(null);
+    }
+
+    if (javaScriptCode == "") return;
+
+    const timeout = setTimeout(async () => {
+      const workspace = blocklyComponentRef.current?.getWorkspace();
+      const dom = Blockly.Xml.workspaceToDom(workspace);
+      const xml = Blockly.Xml.domToPrettyText(dom);
+      
+      const settingJson: string = await tauri.invoke('setting_file_read_command');
+      const setting: SettingModel = JSON.parse(settingJson);
+      if (setting.xml === xml) return;
+      setting.xml = xml;
+      await tauri.invoke('setting_file_write_command', { contents: JSON.stringify(setting) });
+    }, 3000);
+    setJavaScriptCodeTimeout(timeout);
+
+  }, [javaScriptCode]);
+
   React.useEffect(() => {
     // 画像ブロックカテゴリの更新
-    const imgBlockCategory = blocklyComponentRef.current?.getWorkspace().getToolbox().getToolboxItemById('imgBlockCategory');
+    const workspace = blocklyComponentRef.current?.getWorkspace();
+    const imgBlockCategory = workspace.getToolbox().getToolboxItemById('imgBlockCategory');
 
     const contents: { kind: string; blockxml: string; }[] = [];
 
@@ -93,31 +123,27 @@ function App() {
 
   const InterpreterInit = (interpreter: any, globalObject: any) => {
     const adb = new AdbManager(adbPath);
+    const workspace = blocklyComponentRef.current?.getWorkspace();
 
     const aapo = interpreter.nativeToPseudo({});
     interpreter.setProperty(globalObject, 'aapo', aapo);
     interpreter.setProperty(aapo, 'screencap', interpreter.createAsyncFunction(async (callback: any) => {
-      console.log("screencap: S");
       const screencap = await adb.getScreencap();
       setImgSrc(`data:image/png;base64,${screencap}`);
-      console.log("screencap: E");
       callback();
     }));
     interpreter.setProperty(aapo, 'sleep', interpreter.createAsyncFunction(async (timeout: number, callback: any) => {
-      console.log("sleep: S");
       await new Promise((resolve) => setTimeout(resolve, (timeout * 1000)));
-      console.log("sleep: E");
       callback();
     }));
     interpreter.setProperty(aapo, 'touchImg', interpreter.createAsyncFunction(async (imgPath: string, callback: any) => {
-      console.log("touchImg: S");
       const result: boolean = await adb.touchscreenImg(imgPath);
-      console.log("touchImg: E");
       callback(result);
     }));
 
 
 
+    interpreter.setProperty(globalObject, 'highlightBlock', interpreter.createNativeFunction((id: string) => workspace.highlightBlock(id)));
     interpreter.setProperty(globalObject, 'alert', interpreter.createNativeFunction((message: any) => window.alert(message)));
   }
 
@@ -125,9 +151,10 @@ function App() {
     setRunning(true);
     interpreterRunning = true;
 
-    const code = blocklyComponentRef.current?.generateCode();
+    const workspace = blocklyComponentRef.current?.getWorkspace();
+    javascriptGenerator.STATEMENT_PREFIX = 'highlightBlock(%1);\n';
+    const code: string = javascriptGenerator.workspaceToCode(workspace);
     if (code == null) return;
-    setCode(code);
 
     //@ts-ignore
     const myInterpreter = new Interpreter(code, InterpreterInit);
@@ -140,6 +167,7 @@ function App() {
       console.error(error);
     }
     finally {
+      workspace.highlightBlock(null);
       setRunning(false);
       interpreterRunning = false;
     }
@@ -155,7 +183,7 @@ function App() {
 
   return (
     <>
-      <AppBar position="static">
+      <AppBar>
         <Toolbar>
           <IconButton size="large" edge="start" color="inherit" aria-label="menu" sx={{ mr: 2 }}>
             <MenuIcon />
@@ -166,12 +194,12 @@ function App() {
           <Button variant="contained" disableElevation color="error" startIcon={<StopIcon />} sx={{ ml: 1 }} onClick={clickedStop} disabled={!running}>停止</Button>
         </Toolbar>
       </AppBar>
-      <BlocklyComponent ref={blocklyComponentRef} setCode={setCode} readOnly={false}
+      <BlocklyComponent ref={blocklyComponentRef} setCode={setJavaScriptCode} readOnly={false}
         trashcan={true} media={'media/'} sounds={false}
         grid={{ spacing: 20, length: 1, colour: '#888', snap: false }}
         move={{ scrollbars: true, drag: true, wheel: true }}
         zoom={{ controls: true, wheel: false, startScale: 1, maxScale: 3, minScale: 0.3, scaleSpeed: 1.2 }}
-        initialXml={`<xml><block type="screencap_field" x="10" y="10"></block></xml>`}>
+        initialXml={initialXml}>
         <Category name="Logic" colour="#5b80a5">
           <Block type="controls_if"></Block>
           <Block type="logic_compare">
@@ -232,34 +260,53 @@ function App() {
         <Category name="自動操作" colour="65">
           <Block type="screencap_field" />
           <Block type="sleep_field">
+            <Field name="NAME">3</Field>
+          </Block>
+          <Block type="image_touchscreen_field1" />
+          <Block type="image_touchscreen_field2" />
+          <Block type="tap_touchscreen_field">
+            <Field name="X">100</Field>
+            <Field name="Y">150</Field>
+          </Block>
+          <Block type="longtap_touchscreen_field">
+            <Field name="X">100</Field>
+            <Field name="Y">150</Field>
+            <Field name="TIME">5</Field>
+          </Block>
+          <Block type="swipe_touchscreen_field">
+            <Field name="SX">100</Field>
+            <Field name="SY">150</Field>
+            <Field name="EX">200</Field>
+            <Field name="EY">300</Field>
+            <Field name="TIME">5</Field>
+          </Block>
+          <Block type="input_text_field">
             <Value name="NAME">
-              <Block type="math_number">
-                <Field name="NUM">3</Field>
+              <Block type="text">
+                <Field name="TEXT">konomoji</Field>
               </Block>
             </Value>
           </Block>
-          <Block type="image_touchscreen_field" />
-          <Block type="test_react_field" />
-          <Block type="test_react_date_field" />
-          <Block type="controls_ifelse" />
-          <Block type="logic_compare" />
-          <Block type="logic_operation" />
-          <Block type="controls_repeat_ext">
-            <Value name="TIMES">
-              <Shadow type="math_number">
-                <Field name="NUM">10</Field>
-              </Shadow>
+          <Block type="input_keyevent_field">
+            <Field name="NAME">3</Field>
+          </Block>
+          <Block type="image_save_field" />
+          <Block type="app_start_field">
+            <Value name="PACKAGE_NAME">
+              <Block type="text">
+                <Field name="TEXT">com.android.settings</Field>
+              </Block>
+            </Value>
+            <Value name="CLASS_NAME">
+              <Block type="text">
+                <Field name="TEXT">com.android.settings.Settings</Field>
+              </Block>
             </Value>
           </Block>
-          <Block type="logic_operation" />
-          <Block type="logic_negate" />
-          <Block type="logic_boolean" />
-          <Block type="logic_null" disabled="true" />
-          <Block type="logic_ternary" />
-          <Block type="text_charAt">
-            <Value name="VALUE">
-              <Block type="variables_get">
-                <Field name="VAR">text</Field>
+          <Block type="app_end_field">
+            <Value name="PACKAGE_NAME">
+              <Block type="text">
+                <Field name="TEXT">com.android.settings</Field>
               </Block>
             </Value>
           </Block>
@@ -269,11 +316,11 @@ function App() {
         <Category name="Variables" colour="#a55b80" custom="VARIABLE"></Category>
         <Category name="Functions" colour="#995ba5" custom="PROCEDURE"></Category>
       </BlocklyComponent>
-      <div style={{ "position": "absolute", "right": "0px", "width": "30%", "height": "calc(100% - 264px)", "display": "flex" }}>
+      <div style={{ "position": "absolute", "right": "0px", "top": "64px", "width": "30%", "height": "calc(100% - 264px)", "display": "flex" }}>
         <img src={imgSrc} style={{ "maxHeight": "100%", "maxWidth": "100%", "margin": "auto" }} />
       </div>
       <Box style={{ "position": "absolute", "bottom": "0px", "width": "100%", "height": "200px", "overflow": "auto" }}>
-        <pre style={{ "margin": "0px" }}><code>{code}</code></pre>
+        <pre style={{ "margin": "0px" }}><code>{javaScriptCode}</code></pre>
       </Box>
       <SettingsDialogComponent openDialog={open} setOpen={setOpen} imgs={imgs} setImgs={setImgs} adbPath={adbPath} setAdbPath={setAdbPath} />
     </>

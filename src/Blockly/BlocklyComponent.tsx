@@ -32,7 +32,6 @@ import 'blockly/blocks';
 Blockly.setLocale(locale);
 
 export interface BlocklyComponentHandles {
-  generateCode(): string;
   getWorkspace(): any;
 }
 
@@ -52,21 +51,21 @@ export const BlocklyComponent = React.forwardRef((props: any, ref) => {
 
       primaryWorkspace.current = Blockly.inject(blocklyDiv.current, { toolbox: toolbox.current, ...rest },);
       primaryWorkspace.current.addChangeListener(() => {
+        javascriptGenerator.STATEMENT_PREFIX = null;
         const code: string = javascriptGenerator.workspaceToCode(primaryWorkspace.current);
         setCode(code);
       });
-
-      if (initialXml) {
-        Blockly.Xml.domToWorkspace(Blockly.Xml.textToDom(initialXml), primaryWorkspace.current);
-      }
     }
-  }, [primaryWorkspace, toolbox, blocklyDiv, props]);
+  });
+
+  React.useEffect(() => {
+    if (initialXml != null && initialXml != '') {
+      const dom = Blockly.Xml.textToDom(initialXml);
+      Blockly.Xml.domToWorkspace(dom, primaryWorkspace.current);
+    }
+  }, [initialXml]);
 
   React.useImperativeHandle(ref, () => ({
-    generateCode() {
-      const code: string = javascriptGenerator.workspaceToCode(primaryWorkspace.current);
-      return code;
-    },
     getWorkspace() {
       return primaryWorkspace.current;
     },

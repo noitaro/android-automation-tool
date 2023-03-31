@@ -1,7 +1,4 @@
-#![cfg_attr(
-  all(not(debug_assertions), target_os = "windows"),
-  windows_subsystem = "windows"
-)]
+#![cfg_attr(all(not(debug_assertions), target_os = "windows"), windows_subsystem = "windows")]
 
 use std::process::Command;
 use base64::{encode, decode};
@@ -11,6 +8,8 @@ use std::fs::File;
 use std::path::Path;
 use serde_json::json;
 use opencv::{imgproc, imgcodecs, core};
+
+static mut SCREEN_IMG_BUFFER: Vec<u8> = Vec::new();
 
 #[tauri::command]
 fn my_custom_command1() {
@@ -34,7 +33,12 @@ async fn adb_screencap_command(adb: String) -> Result<String, String> {
     .output()
     .expect("Failed to execute command");
 
-  let encode_bin: String = encode(&output.stdout);
+  let buffer = output.stdout;
+  unsafe {
+    SCREEN_IMG_BUFFER = buffer.clone();
+  }
+
+  let encode_bin: String = encode(&buffer);
   Ok(encode_bin)
 }
 
@@ -59,7 +63,6 @@ async fn setting_file_read_command() -> Result<String, String> {
   let mut file = File::open("setting.json").unwrap();
   let mut contents = String::new();
   file.read_to_string(&mut contents).unwrap();
-  println!("読み込んだ文字列: {}", contents);
   Ok(contents)
 }
 
@@ -67,7 +70,6 @@ async fn setting_file_read_command() -> Result<String, String> {
 async fn setting_file_write_command(contents: String) -> Result<(), String> {
   let mut file = File::create("setting.json").expect("failed to create file");
   file.write_all(contents.as_bytes()).unwrap();
-  println!("書き込んだ文字列: {}", contents);
   Ok(())
 }
 
@@ -133,9 +135,16 @@ async fn img_get_file_src_command(file_name: String) -> Result<String, String> {
 #[tauri::command]
 async fn adb_touchscreen_img_command(adb: String, img_path: String) -> Result<bool, String> {
 
+  let image: core::Mat;
+  unsafe {
+    let mat = core::Mat::from_slice(&SCREEN_IMG_BUFFER).unwrap();
+    let input_array: &dyn core::ToInputArray = &mat;
+    image = imgcodecs::imdecode(input_array, imgcodecs::IMREAD_COLOR).unwrap();
+  }
+  
   // テンプレートマッチングを実行するための画像とテンプレート画像を読み込みます。
-  let image = imgcodecs::imread("./image.png", imgcodecs::IMREAD_COLOR).unwrap();
-  let template = imgcodecs::imread("./template.png", imgcodecs::IMREAD_COLOR).unwrap();
+  // let image = imgcodecs::imread("./image.png", imgcodecs::IMREAD_COLOR).unwrap();
+  let template = imgcodecs::imread(&img_path, imgcodecs::IMREAD_COLOR).unwrap();
 
   // 画像のグレースケール化を行います。
   let mut gray_image = core::Mat::default();
@@ -169,6 +178,7 @@ fn main() {
       img_save_command,
       img_get_file_name_command,
       img_get_file_src_command,
+      adb_touchscreen_img_command,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

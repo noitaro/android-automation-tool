@@ -40,16 +40,61 @@ javascriptGenerator['screencap_field'] = function (block) {
 };
 
 javascriptGenerator['sleep_field'] = function (block) {
-  const name = javascriptGenerator.valueToCode(block, 'NAME', javascriptGenerator.ORDER_ATOMIC);
-  return 'aapo.sleep(' + name + ');\n';
+  return 'aapo.sleep(' + block.getField('NAME').getText() + ');\n';
 };
 
-javascriptGenerator['image_touchscreen_field'] = function (block) {
+javascriptGenerator['image_touchscreen_field1'] = function (block) {
   const name = javascriptGenerator.valueToCode(block, 'NAME', javascriptGenerator.ORDER_ATOMIC);
   return 'aapo.touchImg(\'' + name + '\');\n';
+};
+
+javascriptGenerator['image_touchscreen_field2'] = function (block) {
+  const name = javascriptGenerator.valueToCode(block, 'NAME', javascriptGenerator.ORDER_ATOMIC);
+  const code = 'aapo.chkImg(\'' + name + '\')';
+  return [code, javascriptGenerator.ORDER_ATOMIC];
 };
 
 javascriptGenerator['image_serializable_field'] = function (block) {
   const name = block.getField('PATH').getText();
   return [name, javascriptGenerator.ORDER_ATOMIC];
+};
+
+javascriptGenerator['tap_touchscreen_field'] = function (block) {
+  return 'aapo.touchPos(' + block.getField('X').getText() + ', ' + block.getField('Y').getText() + ');\n';
+};
+
+javascriptGenerator['longtap_touchscreen_field'] = function (block) {
+  return 'aapo.longTouchPos(' + block.getField('X').getText() + ', ' + block.getField('Y').getText() + ', ' + block.getField('TIME').getText() * 1000 + ');\n';
+};
+
+javascriptGenerator['swipe_touchscreen_field'] = function (block) {
+  return 'aapo.swipeTouchPos(' + block.getField('SX').getText() + ', ' + block.getField('SY').getText() + ', ' + block.getField('EX').getText() + ', ' + block.getField('EY').getText() + ', ' + block.getField('TIME').getText() * 1000 + ');\n';
+};
+
+javascriptGenerator['input_text_field'] = function (block) {
+  const name = javascriptGenerator.valueToCode(block, 'NAME', javascriptGenerator.ORDER_ATOMIC);
+  return 'aapo.inputtext(' + name + ');\n';
+};
+
+javascriptGenerator['input_keyevent_field'] = function (block) {
+  return 'aapo.inputkeyevent(' + block.getField('NAME').getValue() + ');\n';
+};
+
+javascriptGenerator['image_save_field'] = function (block) {
+  return 'aapo.imgSave(\'./img_save/screenshot_\' + new Date().getTime() + \'.png\');\n';
+};
+
+javascriptGenerator['app_start_field'] = function (block) {
+  let packageName = javascriptGenerator.valueToCode(block, 'PACKAGE_NAME', javascriptGenerator.ORDER_ATOMIC);
+  if (packageName.endsWith("\'")) packageName = packageName.slice(0, -1);
+
+  let className = javascriptGenerator.valueToCode(block, 'CLASS_NAME', javascriptGenerator.ORDER_ATOMIC);
+  if (className.startsWith("\'")) className = className.slice(1);
+
+  return 'aapo.start(' + packageName + '/' + className + ');\n';
+};
+
+javascriptGenerator['app_end_field'] = function (block) {
+  const packageName = javascriptGenerator.valueToCode(block, 'PACKAGE_NAME', javascriptGenerator.ORDER_ATOMIC);
+  return 'aapo.end(' + packageName + ');\n';
 };
