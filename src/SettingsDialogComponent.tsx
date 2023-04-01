@@ -24,8 +24,9 @@ export default function SettingsDialogComponent(props: {
   openDialog: boolean, setOpen: React.Dispatch<React.SetStateAction<boolean>>,
   imgs: ImageModel[], setImgs: React.Dispatch<React.SetStateAction<ImageModel[]>>,
   adbPath: string, setAdbPath: React.Dispatch<React.SetStateAction<string>>,
+  device: string,
 }) {
-  const { openDialog, setOpen, imgs, setImgs, adbPath, setAdbPath } = props;
+  const { openDialog, setOpen, imgs, setImgs, adbPath, setAdbPath, device } = props;
 
   const didLogRef = React.useRef(false);
   React.useEffect(() => {
@@ -38,7 +39,7 @@ export default function SettingsDialogComponent(props: {
   }, []);
 
   const clickedScreenCapture = async () => {
-    const adb = new AdbManager(adbPath);
+    const adb = new AdbManager(adbPath, device);
     // const aa = await adb.devices();
     const screencap = await adb.getScreencap();
     if (screencap != null) {

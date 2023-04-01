@@ -22,6 +22,7 @@ import { SettingModel } from './SettingModel';
 import { CropperComponentHandles } from './CropperComponent';
 import { AdbManager } from './AdbManager';
 import { ImageModel } from './ImageModel';
+import { DeviceSelectComponent, DeviceSelectComponentHandles } from './DeviceSelectComponent';
 hljs.registerLanguage('javascript', javascript);
 
 let interpreterRunning = false;
@@ -31,6 +32,7 @@ function App() {
   const [running, setRunning] = React.useState(false);
   const [javaScriptCode, setJavaScriptCode] = React.useState('');
   const [adbPath, setAdbPath] = React.useState("");
+  const [device, setDevice] = React.useState("");
   const [initialXml, setInitialXml] = React.useState("");
   const [imgs, setImgs] = React.useState<ImageModel[]>([]);
 
@@ -122,7 +124,8 @@ function App() {
   const blocklyComponentRef = React.useRef<BlocklyComponentHandles>(null);
 
   const InterpreterInit = (interpreter: any, globalObject: any) => {
-    const adb = new AdbManager(adbPath);
+    const device = deviceSelectComponentRef.current?.getDevice() ?? "";
+    const adb = new AdbManager(adbPath, device);
     const workspace = blocklyComponentRef.current?.getWorkspace();
 
     const aapo = interpreter.nativeToPseudo({});
@@ -221,6 +224,8 @@ function App() {
   const cropperComponentRef = React.useRef<CropperComponentHandles>(null);
   const [imgSrc, setImgSrc] = React.useState("data:image/png;base64,");
 
+  const deviceSelectComponentRef = React.useRef<DeviceSelectComponentHandles>(null);
+
   return (
     <>
       <AppBar>
@@ -230,6 +235,7 @@ function App() {
           </IconButton>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>アンドロイド自動操作ツール</Typography>
           <Button variant="contained" disableElevation color="secondary" startIcon={<SettingsIcon />} sx={{ ml: 1 }} onClick={() => { setOpen(true); }}>自動操作設定</Button>
+          <DeviceSelectComponent ref={deviceSelectComponentRef} sx={{ ml: 1 }} adbPath={adbPath} setDevice={setDevice} />
           <LoadingButton variant="contained" disableElevation color="success" startIcon={<PlayArrowIcon />} sx={{ ml: 1 }} onClick={clickedExecute} disabled={running} loading={running}>実行</LoadingButton>
           <Button variant="contained" disableElevation color="error" startIcon={<StopIcon />} sx={{ ml: 1 }} onClick={clickedStop} disabled={!running}>停止</Button>
         </Toolbar>
@@ -362,7 +368,7 @@ function App() {
       <Box style={{ "position": "absolute", "bottom": "0px", "width": "100%", "height": "200px", "overflow": "auto" }}>
         <pre style={{ "margin": "0px" }}><code>{javaScriptCode}</code></pre>
       </Box>
-      <SettingsDialogComponent openDialog={open} setOpen={setOpen} imgs={imgs} setImgs={setImgs} adbPath={adbPath} setAdbPath={setAdbPath} />
+      <SettingsDialogComponent openDialog={open} setOpen={setOpen} imgs={imgs} setImgs={setImgs} adbPath={adbPath} setAdbPath={setAdbPath} device={device} />
     </>
   );
 }

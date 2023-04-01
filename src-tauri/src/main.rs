@@ -13,23 +13,26 @@ use opencv::prelude::MatTraitConst;
 static mut SCREEN_IMG_BUFFER: Vec<u8> = Vec::new();
 
 #[tauri::command]
-fn my_custom_command1() {
-  println!("I was invoked from JS!");
-}
-
-#[tauri::command]
-async fn adb_devices_command(adb: String) {
+async fn adb_devices_command(adb: String) -> Result<String, String> {
   let output = Command::new(adb)
     .args(["devices"])
     .output()
     .expect("Failed to execute command");
 
-  println!("{}", String::from_utf8_lossy(&output.stdout));
+  let devices = format!("{}", String::from_utf8_lossy(&output.stdout));
+  Ok(devices)
 }
 
 #[tauri::command]
-async fn adb_screencap_command(adb: String) -> Result<String, String> {
+async fn adb_screencap_command(adb: String, device: String) -> Result<String, String> {
+  
+  let mut args = vec![];
+  if device != "" {
+    args = vec!["-s", &device];
+  }
+
   let output = Command::new(adb)
+    .args(args)
     .args(["exec-out", "screencap", "-p"])
     .output()
     .expect("Failed to execute command");
@@ -41,22 +44,6 @@ async fn adb_screencap_command(adb: String) -> Result<String, String> {
 
   let encode_bin: String = encode(&buffer);
   Ok(encode_bin)
-}
-
-#[tauri::command]
-async fn my_custom_command3() -> String {
-  "Hello from Rust!".into()
-}
-
-#[tauri::command]
-async fn my_custom_command4(invoke_message: String) -> Result<String, String> {
-  if invoke_message == "" {
-    // If something fails
-    Err("This failed!".into())
-  } else {
-    // If it worked
-    Ok("This worked!".into())
-  }
 }
 
 #[tauri::command]
@@ -134,8 +121,15 @@ async fn img_get_file_src_command(file_name: String) -> Result<String, String> {
 }
 
 #[tauri::command]
-async fn adb_app_start_command(adb: String, app_path: String) -> Result<(), String> {
+async fn adb_app_start_command(adb: String, device: String, app_path: String) -> Result<(), String> {
+  
+  let mut args = vec![];
+  if device != "" {
+    args = vec!["-s", &device];
+  }
+
   let output = Command::new(adb)
+    .args(args)
     .args(["shell", "am", "start", "-n", &app_path])
     .output()
     .expect("Failed to execute command");
@@ -145,8 +139,15 @@ async fn adb_app_start_command(adb: String, app_path: String) -> Result<(), Stri
 }
 
 #[tauri::command]
-async fn adb_app_end_command(adb: String, app_path: String) -> Result<(), String> {
+async fn adb_app_end_command(adb: String, device: String, app_path: String) -> Result<(), String> {
+  
+  let mut args = vec![];
+  if device != "" {
+    args = vec!["-s", &device];
+  }
+
   let output = Command::new(adb)
+    .args(args)
     .args(["shell", "am", "force-stop", &app_path])
     .output()
     .expect("Failed to execute command");
@@ -156,8 +157,15 @@ async fn adb_app_end_command(adb: String, app_path: String) -> Result<(), String
 }
 
 #[tauri::command]
-async fn adb_touchscreen_swipe_command(adb: String, sx: String, sy: String, ex: String, ey: String, ms: String) -> Result<(), String> {
+async fn adb_touchscreen_swipe_command(adb: String, device: String, sx: String, sy: String, ex: String, ey: String, ms: String) -> Result<(), String> {
+  
+  let mut args = vec![];
+  if device != "" {
+    args = vec!["-s", &device];
+  }
+
   let output = Command::new(adb)
+    .args(args)
     .args(["shell", "input", "touchscreen", "swipe", &sx, &sy, &ex, &ey, &ms])
     .output()
     .expect("Failed to execute command");
@@ -167,8 +175,15 @@ async fn adb_touchscreen_swipe_command(adb: String, sx: String, sy: String, ex: 
 }
 
 #[tauri::command]
-async fn adb_touchscreen_tap_command(adb: String, x: String, y: String) -> Result<(), String> {
+async fn adb_touchscreen_tap_command(adb: String, device: String, x: String, y: String) -> Result<(), String> {
+  
+  let mut args = vec![];
+  if device != "" {
+    args = vec!["-s", &device];
+  }
+
   let output = Command::new(adb)
+    .args(args)
     .args(["shell", "input", "touchscreen", "tap", &x, &y])
     .output()
     .expect("Failed to execute command");
@@ -178,8 +193,15 @@ async fn adb_touchscreen_tap_command(adb: String, x: String, y: String) -> Resul
 }
 
 #[tauri::command]
-async fn adb_input_text_command(adb: String, text: String) -> Result<(), String> {
+async fn adb_input_text_command(adb: String, device: String, text: String) -> Result<(), String> {
+  
+  let mut args = vec![];
+  if device != "" {
+    args = vec!["-s", &device];
+  }
+
   let output = Command::new(adb)
+    .args(args)
     .args(["shell", "input", "text", &text])
     .output()
     .expect("Failed to execute command");
@@ -189,8 +211,15 @@ async fn adb_input_text_command(adb: String, text: String) -> Result<(), String>
 }
 
 #[tauri::command]
-async fn adb_input_keyevent_command(adb: String, keycode: String) -> Result<(), String> {
+async fn adb_input_keyevent_command(adb: String, device: String, keycode: String) -> Result<(), String> {
+  
+  let mut args = vec![];
+  if device != "" {
+    args = vec!["-s", &device];
+  }
+
   let output = Command::new(adb)
+    .args(args)
     .args(["shell", "input", "keyevent", &keycode])
     .output()
     .expect("Failed to execute command");
@@ -200,8 +229,8 @@ async fn adb_input_keyevent_command(adb: String, keycode: String) -> Result<(), 
 }
 
 #[tauri::command]
-async fn adb_touchscreen_img_command(adb: String, img_path: String, clickable: bool) -> Result<bool, String> {
-
+async fn adb_touchscreen_img_command(adb: String, device: String, img_path: String, clickable: bool) -> Result<bool, String> {
+  
   let img: core::Mat;
   unsafe {
     let mat = core::Mat::from_slice(&SCREEN_IMG_BUFFER).unwrap();
@@ -234,7 +263,7 @@ async fn adb_touchscreen_img_command(adb: String, img_path: String, clickable: b
       let width = &template.cols();
       let height = &template.rows();
       
-      adb_touchscreen_tap_command(adb, (max_loc.x + (width/2)).to_string(), (max_loc.y + (height/2)).to_string()).await?;
+      adb_touchscreen_tap_command(adb, device, (max_loc.x + (width/2)).to_string(), (max_loc.y + (height/2)).to_string()).await?;
     }
     Ok(true)
   } else {
@@ -265,11 +294,8 @@ async fn adb_save_img_command(save_path: String) -> Result<(), String> {
 fn main() {
   tauri::Builder::default()
     .invoke_handler(tauri::generate_handler![
-      my_custom_command1, 
       adb_devices_command,
       adb_screencap_command, 
-      my_custom_command3, 
-      my_custom_command4,
       setting_file_read_command,
       setting_file_write_command,
       img_save_command,
