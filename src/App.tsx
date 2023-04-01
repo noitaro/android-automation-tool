@@ -136,10 +136,50 @@ function App() {
       await new Promise((resolve) => setTimeout(resolve, (timeout * 1000)));
       callback();
     }));
-    interpreter.setProperty(aapo, 'touchImg', interpreter.createAsyncFunction(async (imgPath: string, callback: any) => {
-      const result: boolean = await adb.touchscreenImg(imgPath);
+    interpreter.setProperty(aapo, 'chkImg', interpreter.createAsyncFunction(async (imgPath: string, callback: any) => {
+      const result: boolean = await adb.checkScreenImg(imgPath);
       callback(result);
     }));
+    interpreter.setProperty(aapo, 'touchImg', interpreter.createAsyncFunction(async (imgPath: string, callback: any) => {
+      const result: boolean = await adb.touchScreenImg(imgPath);
+      callback(result);
+    }));
+    interpreter.setProperty(aapo, 'touchPos', interpreter.createAsyncFunction(async (x: number, y: number, callback: any) => {
+      await adb.touchscreenPos(x.toString(), y.toString());
+      callback();
+    }));
+    interpreter.setProperty(aapo, 'longTouchPos', interpreter.createAsyncFunction(async (x: number, y: number, ms: number, callback: any) => {
+      await adb.longTouchscreenPos(x.toString(), y.toString(), ms.toString());
+      callback();
+    }));
+    interpreter.setProperty(aapo, 'swipeTouchPos', interpreter.createAsyncFunction(async (sx: number, sy: number, ex: number, ey: number, ms: number, callback: any) => {
+      await adb.swipeTouchscreenPos(sx.toString(), sy.toString(), ex.toString(), ey.toString(), ms.toString());
+      callback();
+    }));
+    interpreter.setProperty(aapo, 'inputtext', interpreter.createAsyncFunction(async (text: string, callback: any) => {
+      await adb.inputText(text);
+      callback();
+    }));
+    interpreter.setProperty(aapo, 'inputkeyevent', interpreter.createAsyncFunction(async (keycode: number, callback: any) => {
+      await adb.inputKeyEvent(keycode.toString());
+      callback();
+    }));
+    interpreter.setProperty(aapo, 'imgSave', interpreter.createAsyncFunction(async (savePath: string, callback: any) => {
+      await adb.imgSave(savePath);
+      callback();
+    }));
+    interpreter.setProperty(aapo, 'start', interpreter.createAsyncFunction(async (appPath: string, callback: any) => {
+      await adb.appStart(appPath);
+      callback();
+    }));
+    interpreter.setProperty(aapo, 'end', interpreter.createAsyncFunction(async (appPath: string, callback: any) => {
+      await adb.appEnd(appPath);
+      callback();
+    }));
+
+
+
+
 
 
 
