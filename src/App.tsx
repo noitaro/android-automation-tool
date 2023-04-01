@@ -23,6 +23,7 @@ import { CropperComponentHandles } from './CropperComponent';
 import { AdbManager } from './AdbManager';
 import { ImageModel } from './ImageModel';
 import { DeviceSelectComponent, DeviceSelectComponentHandles } from './DeviceSelectComponent';
+import { LeftMenuComponent } from './LeftMenuComponent';
 hljs.registerLanguage('javascript', javascript);
 
 let interpreterRunning = false;
@@ -44,37 +45,6 @@ function App() {
       didLogRef.current = true;
 
       hljs.initHighlighting();
-
-      (async () => {
-        const settingJson: string = await tauri.invoke('setting_file_read_command');
-        const setting: SettingModel = JSON.parse(settingJson);
-        setAdbPath(setting.adbPath);
-        setInitialXml(setting.xml);
-      })();
-
-      (async () => {
-        const filesJson: string = await tauri.invoke('img_get_file_name_command');
-        const files: string[] = JSON.parse(filesJson);
-        files.sort(((a, b) => {
-          if (a < b) return 1;
-          if (a > b) return -1;
-          return 0;
-        }));
-        console.log(files);
-
-        const readedImgs: ImageModel[] = [];
-        for (const fileName of files) {
-          const fileSrc: string = await tauri.invoke('img_get_file_src_command', { fileName: fileName });
-          const imageModel = new ImageModel();
-          imageModel.name = fileName;
-          imageModel.path = `./img/${fileName}.png`;
-          imageModel.src = `data:image/png;base64,${fileSrc}`;
-          readedImgs.push(imageModel);
-        }
-
-        setImgs(readedImgs);
-      })();
-
     }
   }, []);
 
@@ -87,13 +57,14 @@ function App() {
     }
 
     if (javaScriptCode == "") return;
+    if (projectName == "") return;
 
     const timeout = setTimeout(async () => {
       const workspace = blocklyComponentRef.current?.getWorkspace();
       const dom = Blockly.Xml.workspaceToDom(workspace);
       const xml = Blockly.Xml.domToPrettyText(dom);
-      
-      const settingJson: string = await tauri.invoke('setting_file_read_command');
+
+      const settingJson: string = await tauri.invoke('setting_file_read_command', { projectName: projectName });
       const setting: SettingModel = JSON.parse(settingJson);
       if (setting.xml === xml) return;
       setting.xml = xml;
@@ -225,12 +196,54 @@ function App() {
   const [imgSrc, setImgSrc] = React.useState("data:image/png;base64,");
 
   const deviceSelectComponentRef = React.useRef<DeviceSelectComponentHandles>(null);
+  const [openDrawer, setOpenDrawer] = React.useState(false);
+
+  const [projectName, setProjectName] = React.useState("");
+  React.useEffect(() => {
+    setAdbPath("");
+    setInitialXml("");
+    setImgs([]);
+
+    if (projectName == "") return;
+
+    (async () => {
+      const settingJson: string = await tauri.invoke('setting_file_read_command', { projectName: projectName });
+      const setting: SettingModel = JSON.parse(settingJson);
+      setAdbPath(setting.adbPath);
+      setInitialXml(setting.xml);
+    })();
+
+    (async () => {
+      const filesJson: string = await tauri.invoke('img_get_file_name_command', { projectName: projectName });
+      const files: string[] = JSON.parse(filesJson);
+      files.sort(((a, b) => {
+        if (a < b) return 1;
+        if (a > b) return -1;
+        return 0;
+      }));
+      console.log(files);
+
+      const readedImgs: ImageModel[] = [];
+      for (const fileName of files) {
+        const fileSrc: string = await tauri.invoke('img_get_file_src_command', { projectName: projectName, fileName: fileName });
+        const imageModel = new ImageModel();
+        imageModel.name = fileName;
+        imageModel.path = `./img/${fileName}.png`;
+        imageModel.src = `data:image/png;base64,${fileSrc}`;
+        readedImgs.push(imageModel);
+      }
+
+      setImgs(readedImgs);
+    })();
+
+  }, [projectName]);
+
 
   return (
     <>
       <AppBar>
         <Toolbar>
-          <IconButton size="large" edge="start" color="inherit" aria-label="menu" sx={{ mr: 2 }}>
+          <IconButton size="large" edge="start" color="inherit" aria-label="menu" sx={{ mr: 2 }} onClick={() => { setOpenDrawer(true); }}>
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>アンドロイド自動操作ツール</Typography>
@@ -240,6 +253,7 @@ function App() {
           <Button variant="contained" disableElevation color="error" startIcon={<StopIcon />} sx={{ ml: 1 }} onClick={clickedStop} disabled={!running}>停止</Button>
         </Toolbar>
       </AppBar>
+      <LeftMenuComponent open={openDrawer} setOpen={setOpenDrawer} setProject={setProjectName} />
       <BlocklyComponent ref={blocklyComponentRef} setCode={setJavaScriptCode} readOnly={false}
         trashcan={true} media={'media/'} sounds={false}
         grid={{ spacing: 20, length: 1, colour: '#888', snap: false }}
@@ -368,7 +382,7 @@ function App() {
       <Box style={{ "position": "absolute", "bottom": "0px", "width": "100%", "height": "200px", "overflow": "auto" }}>
         <pre style={{ "margin": "0px" }}><code>{javaScriptCode}</code></pre>
       </Box>
-      <SettingsDialogComponent openDialog={open} setOpen={setOpen} imgs={imgs} setImgs={setImgs} adbPath={adbPath} setAdbPath={setAdbPath} device={device} />
+      <SettingsDialogComponent openDialog={open} setOpen={setOpen} imgs={imgs} setImgs={setImgs} adbPath={adbPath} setAdbPath={setAdbPath} device={device} projectName={projectName} />
     </>
   );
 }

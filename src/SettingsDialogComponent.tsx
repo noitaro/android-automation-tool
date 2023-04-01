@@ -25,8 +25,9 @@ export default function SettingsDialogComponent(props: {
   imgs: ImageModel[], setImgs: React.Dispatch<React.SetStateAction<ImageModel[]>>,
   adbPath: string, setAdbPath: React.Dispatch<React.SetStateAction<string>>,
   device: string,
+  projectName: string,
 }) {
-  const { openDialog, setOpen, imgs, setImgs, adbPath, setAdbPath, device } = props;
+  const { openDialog, setOpen, imgs, setImgs, adbPath, setAdbPath, device, projectName } = props;
 
   const didLogRef = React.useRef(false);
   React.useEffect(() => {
@@ -68,6 +69,8 @@ export default function SettingsDialogComponent(props: {
   }
 
   const clickedFileOpenDialog = async () => {
+    if (projectName == "") return;
+
     // Open a selection dialog for image files
     const selected = await open({ multiple: false, title: "adb を選択", defaultPath: "adb" });
     if (Array.isArray(selected)) {
@@ -77,7 +80,7 @@ export default function SettingsDialogComponent(props: {
     } else {
       // user selected a single file
       setAdbPath(selected);
-      const settingJson: string = await tauri.invoke('setting_file_read_command');
+      const settingJson: string = await tauri.invoke('setting_file_read_command', { projectName: projectName });
       const setting: SettingModel = JSON.parse(settingJson);
       setting.adbPath = selected;
       await tauri.invoke('setting_file_write_command', { contents: JSON.stringify(setting) });

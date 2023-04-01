@@ -13,6 +13,40 @@ use opencv::prelude::MatTraitConst;
 static mut SCREEN_IMG_BUFFER: Vec<u8> = Vec::new();
 
 #[tauri::command]
+async fn project_create_command(project_name: String) -> Result<(), String> {
+
+  let project_root_path = Path::new("./project");
+  if project_root_path.exists() == false || project_root_path.is_dir() == false {
+    fs::create_dir("project").unwrap();
+  }
+
+  let project_path = format!("./project/{}", project_name);
+  let folder_path = Path::new(&project_path);
+  if folder_path.exists() == false || folder_path.is_dir() == false {
+    fs::create_dir(project_path).unwrap();
+  }
+
+  Ok(())
+}
+
+#[tauri::command]
+async fn project_list_command() -> Result<Vec<String>, String> {
+  let path = "./project";
+  let dirs = fs::read_dir(path).unwrap();
+
+  let mut project_list: Vec<String> = vec![];
+  for dir in dirs {
+    let dir_entry = dir.unwrap();
+    if dir_entry.file_type().unwrap().is_dir() {
+      let folder_name = dir_entry.file_name().into_string().unwrap();
+      project_list.push(folder_name);
+    }
+  }
+
+  Ok(project_list)
+}
+
+#[tauri::command]
 async fn adb_devices_command(adb: String) -> Result<String, String> {
   let output = Command::new(adb)
     .args(["devices"])
@@ -47,47 +81,40 @@ async fn adb_screencap_command(adb: String, device: String) -> Result<String, St
 }
 
 #[tauri::command]
-async fn setting_file_read_command() -> Result<String, String> {
-  let mut file = File::open("setting.json").unwrap();
+async fn setting_file_read_command(project_name: String) -> Result<String, String> {
+  let path = format!("./project/{}/setting.json", project_name);
+  let mut file = File::open(path).unwrap();
   let mut contents = String::new();
   file.read_to_string(&mut contents).unwrap();
   Ok(contents)
 }
 
 #[tauri::command]
-async fn setting_file_write_command(contents: String) -> Result<(), String> {
-  let mut file = File::create("setting.json").expect("failed to create file");
+async fn setting_file_write_command(project_name: String, contents: String) -> Result<(), String> {
+  let path = format!("./project/{}/setting.json", project_name);
+  let mut file = File::create(path).expect("failed to create file");
   file.write_all(contents.as_bytes()).unwrap();
   Ok(())
 }
 
 #[tauri::command]
-async fn img_save_command(base64: String, file_name: String) -> Result<(), String> {
-  let folder_path = Path::new("./img");
-  if folder_path.exists() && folder_path.is_dir() {
-      println!("The folder exists.");
-  } else {
-      println!("The folder does not exist.");
+async fn img_save_command(project_name: String, base64: String, file_name: String) -> Result<(), String> {
+  let path = format!("./project/{}/img", project_name);
+  let folder_path = Path::new(&path);
+  if folder_path.exists() == false || folder_path.is_dir() == false {
       fs::create_dir("img").unwrap();
   }
 
   let buffer = decode(base64).unwrap();
   let img = image::load_from_memory(&buffer).unwrap();
-  image::DynamicImage::save(&img, format!("{}{}{}", "./img/", file_name, ".png")).unwrap();
+  image::DynamicImage::save(&img, format!("./project/{}/img/{}.png", project_name, file_name)).unwrap();
   Ok(())
 }
 
 #[tauri::command]
-async fn img_get_file_name_command() -> Result<String, String> {
-  let folder_path = Path::new("./img");
-  if folder_path.exists() && folder_path.is_dir() {
-      println!("The folder exists.");
-  } else {
-      println!("The folder does not exist.");
-      fs::create_dir("img").unwrap();
-  }
-
-  let img_path = Path::new("./img");
+async fn img_get_file_name_command(project_name: String) -> Result<String, String> {
+  let path = format!("./project/{}/img", project_name);
+  let img_path = Path::new(&path);
   let entries = fs::read_dir(img_path).unwrap();
 
   let mut vec = Vec::new();
@@ -104,9 +131,9 @@ async fn img_get_file_name_command() -> Result<String, String> {
 }
 
 #[tauri::command]
-async fn img_get_file_src_command(file_name: String) -> Result<String, String> {
-  println!("img_get_file_src_command: {}", file_name);
-  let path = format!("{}{}{}", "./img/", file_name, ".png");
+async fn img_get_file_src_command(project_name: String, file_name: String) -> Result<String, String> {
+  let path = format!("./project/{}/img/{}.png", project_name, file_name);
+  println!("img_get_file_src_command: {}", path);
   let img_path = Path::new(&path);
 
   // 画像ファイルを読み込む
@@ -273,13 +300,11 @@ async fn adb_touchscreen_img_command(adb: String, device: String, img_path: Stri
 }
 
 #[tauri::command]
-async fn adb_save_img_command(save_path: String) -> Result<(), String> {
-  let folder_path = Path::new("./img_save");
-  if folder_path.exists() && folder_path.is_dir() {
-      println!("The folder exists.");
-  } else {
-      println!("The folder does not exist.");
-      fs::create_dir("img_save").unwrap();
+async fn adb_save_img_command(project_name: String, file_name: String) -> Result<(), String> {
+  let path = format!("./project/{}/img_save", project_name);
+  let folder_path = Path::new(&path);
+  if folder_path.exists() == false || folder_path.is_dir() == false {
+    fs::create_dir(path).unwrap();
   }
 
   let img: image::DynamicImage;
@@ -287,13 +312,16 @@ async fn adb_save_img_command(save_path: String) -> Result<(), String> {
     img = image::load_from_memory(&SCREEN_IMG_BUFFER).unwrap();
   }
   
-  image::DynamicImage::save(&img, &save_path).unwrap();
+  let file_path = format!("./project/{}/img_save/{}", project_name, file_name);
+  image::DynamicImage::save(&img, &file_path).unwrap();
   Ok(())
 }
 
 fn main() {
   tauri::Builder::default()
     .invoke_handler(tauri::generate_handler![
+      project_create_command,
+      project_list_command,
       adb_devices_command,
       adb_screencap_command, 
       setting_file_read_command,
