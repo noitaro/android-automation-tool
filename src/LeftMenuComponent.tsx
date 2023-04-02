@@ -36,12 +36,15 @@ export const LeftMenuComponent = React.forwardRef((props: { open: boolean, setOp
   }, []);
 
   const [projectList, setProjectList] = React.useState<string[]>([]);
-  const refreshProjectList = async () => {
+  const refreshProjectList = async (createProjectName: string = "") => {
     setProjectList([]);
 
     const result: string[] = await tauri.invoke('project_list_command');
     
     setProjectList(result);
+    if (createProjectName != "") {
+      setProject(createProjectName);
+    }
   }
 
   return (

@@ -3,7 +3,7 @@ import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextFie
 import { tauri } from "@tauri-apps/api";
 import React from "react";
 
-export const CreateProjectComponent = React.forwardRef((props: { open: boolean, setOpen: React.Dispatch<React.SetStateAction<boolean>>, refreshProjectList: () => Promise<void> }, ref) => {
+export const CreateProjectComponent = React.forwardRef((props: { open: boolean, setOpen: React.Dispatch<React.SetStateAction<boolean>>, refreshProjectList: (createProjectName?: string) => Promise<void> }, ref) => {
   const { open, setOpen, refreshProjectList } = props;
   const [loading, setLoading] = React.useState(false);
   const [projectName, setProjectName] = React.useState("");
@@ -13,7 +13,7 @@ export const CreateProjectComponent = React.forwardRef((props: { open: boolean, 
 
     await tauri.invoke('project_create_command', { projectName: projectName });
 
-    await refreshProjectList();
+    await refreshProjectList(projectName);
     setOpen(false);
     setLoading(false);
   }

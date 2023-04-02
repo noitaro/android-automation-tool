@@ -7,7 +7,7 @@ npm run tauri dev
 
 ## Debug Build
 ```Bash
-npm run tauri build -- --debug
+npm run tauri build --debug
 ```
 
 ## App Publishing

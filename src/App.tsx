@@ -100,7 +100,7 @@ function App() {
     for (const img of imgs) {
       const block = {
         "kind": "block",
-        "blockxml": `<block type="image_serializable_field"><field name="IMG">${img.src}</field><field name="NAME">${img.name}</field><field name="PATH">${img.path}</field></block>`
+        "blockxml": `<block type="image_serializable_field"><field name="IMG">${img.src}</field><field name="NAME">${img.name}</field><field name="PATH">./img/${img.name}.png</field></block>`
       };
       contents.push(block);
     }
@@ -248,7 +248,6 @@ function App() {
         const fileSrc: string = await tauri.invoke('img_get_file_src_command', { projectName: projectName, fileName: fileName });
         const imageModel = new ImageModel();
         imageModel.name = fileName;
-        imageModel.path = `./img/${fileName}.png`;
         imageModel.src = `data:image/png;base64,${fileSrc}`;
         readedImgs.push(imageModel);
       }

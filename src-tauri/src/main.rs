@@ -3,6 +3,7 @@
 use std::process::Command;
 use base64::{encode, decode};
 use std::io::{Read, Write};
+use std::os::windows::process::CommandExt;
 use std::fs;
 use std::fs::File;
 use std::path::Path;
@@ -48,10 +49,17 @@ async fn project_list_command() -> Result<Vec<String>, String> {
 
 #[tauri::command]
 async fn adb_devices_command(adb: String) -> Result<String, String> {
-  let result = Command::new(adb).args(["devices"]).output();
+  let result = Command::new(adb)
+  .args(["devices"])
+  .stdout(std::process::Stdio::piped())
+  .creation_flags(winapi::um::winbase::CREATE_NO_WINDOW)
+  .spawn();
+
   match result {
-    Ok(output) => {
-      let devices = format!("{}", String::from_utf8_lossy(&output.stdout));
+    Ok(child) => {
+      let mut stdout: Vec<u8> = Vec::new();
+      child.stdout.unwrap().read_to_end(&mut stdout).expect("failed to read child stdout");
+      let devices = format!("{}", String::from_utf8_lossy(&stdout));
       Ok(devices)
     }
     Err(error) => {
@@ -68,12 +76,19 @@ async fn adb_screencap_command(adb: String, device: String) -> Result<String, St
     args = vec!["-s", &device];
   }
 
-  let result = Command::new(adb).args(args).args(["exec-out", "screencap", "-p"]).output();
+  let result = Command::new(adb)
+  .args(args)
+  .args(["exec-out", "screencap", "-p"])
+  .stdout(std::process::Stdio::piped())
+  .creation_flags(winapi::um::winbase::CREATE_NO_WINDOW)
+  .spawn();
+
   match result {
-    Ok(output) => {
-      let buffer = output.stdout;
-      unsafe {SCREEN_IMG_BUFFER = buffer.clone();}
-      let encode_bin: String = encode(&buffer);
+    Ok(child) => {
+      let mut stdout: Vec<u8> = Vec::new();
+      child.stdout.unwrap().read_to_end(&mut stdout).expect("failed to read child stdout");
+      unsafe {SCREEN_IMG_BUFFER = stdout.clone();}
+      let encode_bin: String = encode(&stdout);
       Ok(encode_bin)
     }
     Err(error) => {

@@ -8,7 +8,7 @@
   },
   "package": {
     "productName": "android-automation-tool",
-    "version": "0.1.0"
+    "version": "3.0.0"
   },
   "tauri": {
     "allowlist": {
@@ -56,7 +56,10 @@
       "windows": {
         "certificateThumbprint": null,
         "digestAlgorithm": "sha256",
-        "timestampUrl": ""
+        "timestampUrl": "",
+        "wix": {
+          "language": "ja-JP"
+        }
       }
     },
     "security": {
