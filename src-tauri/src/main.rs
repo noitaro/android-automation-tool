@@ -7,7 +7,6 @@ use std::os::windows::process::CommandExt;
 use std::fs;
 use std::fs::File;
 use std::path::Path;
-use serde_json::json;
 use opencv::{imgproc, imgcodecs, core};
 use opencv::prelude::MatTraitConst;
 
@@ -16,15 +15,13 @@ static mut SCREEN_IMG_BUFFER: Vec<u8> = Vec::new();
 #[tauri::command]
 async fn project_create_command(project_name: String) -> Result<(), String> {
 
-  let project_root_path = Path::new("./project");
-  if project_root_path.exists() == false || project_root_path.is_dir() == false {
-    fs::create_dir("project").unwrap();
-  }
+  let document_dir = dirs::document_dir().unwrap();
+  let project_dir = format!("{}/android-automation-tool/project/{}", &document_dir.display(), project_name);
+  println!("project_create_command: {}", project_dir);
 
-  let project_path = format!("./project/{}", project_name);
-  let folder_path = Path::new(&project_path);
-  if folder_path.exists() == false || folder_path.is_dir() == false {
-    fs::create_dir(project_path).unwrap();
+  let project_path = Path::new(&project_dir);
+  if project_path.exists() == false || project_path.is_dir() == false {
+    fs::create_dir(&project_dir).unwrap();
   }
 
   Ok(())
@@ -32,8 +29,23 @@ async fn project_create_command(project_name: String) -> Result<(), String> {
 
 #[tauri::command]
 async fn project_list_command() -> Result<Vec<String>, String> {
-  let path = "./project";
-  let dirs = fs::read_dir(path).unwrap();
+  
+  let document_dir = dirs::document_dir().unwrap();
+  let aat_dir = format!("{}/android-automation-tool", &document_dir.display());
+  let aat_path = Path::new(&aat_dir);
+  if aat_path.exists() == false || aat_path.is_dir() == false {
+    fs::create_dir(&aat_dir).unwrap();
+  }
+
+  let project_root_dir = format!("{}/android-automation-tool/project", &document_dir.display());
+  let project_root_path = Path::new(&project_root_dir);
+  if project_root_path.exists() == false || project_root_path.is_dir() == false {
+    fs::create_dir(&project_root_dir).unwrap();
+  }
+
+  println!("project_list_command: {}", project_root_dir);
+
+  let dirs = fs::read_dir(project_root_dir).unwrap();
 
   let mut project_list: Vec<String> = vec![];
   for dir in dirs {
@@ -99,13 +111,14 @@ async fn adb_screencap_command(adb: String, device: String) -> Result<String, St
 
 #[tauri::command]
 async fn setting_file_read_command(project_name: String) -> Result<String, String> {
-  println!("setting_file_read_command: {}", project_name);
   
-  let path = format!("./project/{}/setting.json", project_name);
+  let document_dir = dirs::document_dir().unwrap();
+  let setting_dir = format!("{}/android-automation-tool/project/{}/setting.json", &document_dir.display(), project_name);
+  println!("setting_file_read_command: {}", setting_dir);
 
   let mut contents = String::new();
 
-  let result = File::open(path);
+  let result = File::open(setting_dir);
   match result {
     Ok(mut file) => {
       file.read_to_string(&mut contents).unwrap();
@@ -120,72 +133,82 @@ async fn setting_file_read_command(project_name: String) -> Result<String, Strin
 
 #[tauri::command]
 async fn setting_file_write_command(project_name: String, contents: String) -> Result<(), String> {
-  println!("setting_file_write_command: {}", project_name);
 
-  let path = format!("./project/{}/setting.json", project_name);
-  let mut file = File::create(path).expect("failed to create file");
+  let document_dir = dirs::document_dir().unwrap();
+  let setting_dir = format!("{}/android-automation-tool/project/{}/setting.json", &document_dir.display(), project_name);
+  println!("setting_file_write_command: {}", setting_dir);
+
+  let mut file = File::create(setting_dir).unwrap();
   file.write_all(contents.as_bytes()).unwrap();
   Ok(())
 }
 
 #[tauri::command]
 async fn python_file_write_command(project_name: String, contents: String) -> Result<(), String> {
-  println!("python_file_write_command: {}", project_name);
 
-  let path = format!("./project/{}/main.py", project_name);
-  let mut file = File::create(path).expect("failed to create file");
+  let document_dir = dirs::document_dir().unwrap();
+  let python_dir = format!("{}/android-automation-tool/project/{}/main.py", &document_dir.display(), project_name);
+  println!("python_file_write_command: {}", python_dir);
+
+  let mut file = File::create(python_dir).unwrap();
   file.write_all(contents.as_bytes()).unwrap();
   Ok(())
 }
 
 #[tauri::command]
 async fn img_save_command(project_name: String, base64: String, file_name: String) -> Result<(), String> {
-  let path = format!("./project/{}/img", project_name);
-  println!("img_save_command: {}", path);
+  
+  let document_dir = dirs::document_dir().unwrap();
+  let img_dir = format!("{}/android-automation-tool/project/{}/img", &document_dir.display(), project_name);
+  println!("img_save_command: {}", img_dir);
 
-  let folder_path = Path::new(&path);
+  let folder_path = Path::new(&img_dir);
   if folder_path.exists() == false || folder_path.is_dir() == false {
-      fs::create_dir("img").unwrap();
+      fs::create_dir(&img_dir).unwrap();
   }
 
   let buffer = decode(base64).unwrap();
   let img = image::load_from_memory(&buffer).unwrap();
-  image::DynamicImage::save(&img, format!("./project/{}/img/{}.png", project_name, file_name)).unwrap();
+  image::DynamicImage::save(&img, format!("{}/android-automation-tool/project/{}/img/{}.png", &document_dir.display(), project_name, file_name)).unwrap();
   Ok(())
 }
 
 #[tauri::command]
-async fn img_get_file_name_command(project_name: String) -> Result<String, String> {
-  let path = format!("./project/{}/img", project_name);
-  println!("img_get_file_name_command: {}", path);
+async fn img_get_file_name_command(project_name: String) -> Result<Vec<String>, String> {
+  
+  let document_dir = dirs::document_dir().unwrap();
+  let img_dir = format!("{}/android-automation-tool/project/{}/img", &document_dir.display(), project_name);
+  println!("img_get_file_name_command: {}", img_dir);
 
-  let img_path = Path::new(&path);
-  if img_path.exists() == false || img_path.is_dir() == false {
-      fs::create_dir(img_path).unwrap();
-  }
-
-  let entries = fs::read_dir(img_path).unwrap();
+  let img_path = Path::new(&img_dir);
+  let result = fs::read_dir(img_path);
 
   let mut vec = Vec::new();
-  for entry in entries {
-      let entry = entry.unwrap();
-      let mut path_buf = entry.path();
-      path_buf.set_extension("");
-      let file_name = path_buf.file_name().unwrap().to_string_lossy().into_owned();
-      vec.push(file_name);
+  match result {
+    Ok(read_dir) => {
+      for entry in read_dir {
+        let entry = entry.unwrap();
+        let mut path_buf = entry.path();
+        path_buf.set_extension("");
+        let file_name = path_buf.file_name().unwrap().to_string_lossy().into_owned();
+        vec.push(file_name);
+      }
+    }
+    Err(_) => {}
   }
 
-  let json_string = json!(vec).to_string();
-  Ok(json_string)
+  Ok(vec)
 }
 
 #[tauri::command]
 async fn img_get_file_src_command(project_name: String, file_name: String) -> Result<String, String> {
-  let path = format!("./project/{}/img/{}.png", project_name, file_name);
-  println!("img_get_file_src_command: {}", path);
-  let img_path = Path::new(&path);
+  
+  let document_dir = dirs::document_dir().unwrap();
+  let img_dir = format!("{}/android-automation-tool/project/{}/img/{}.png", &document_dir.display(), project_name, file_name);
+  println!("img_get_file_src_command: {}", img_dir);
 
   // 画像ファイルを読み込む
+  let img_path = Path::new(&img_dir);
   let mut img_file = File::open(img_path).unwrap();
   
   let mut buffer = Vec::new();
@@ -204,13 +227,16 @@ async fn adb_app_start_command(adb: String, device: String, app_path: String) ->
     args = vec!["-s", &device];
   }
 
-  let output = Command::new(adb)
+  let mut child = Command::new(adb)
     .args(args)
     .args(["shell", "am", "start", "-n", &app_path])
-    .output()
+    .stdout(std::process::Stdio::null())
+    .creation_flags(winapi::um::winbase::CREATE_NO_WINDOW)
+    .spawn()
     .expect("Failed to execute command");
 
-  println!("status code: {}", output.status);
+  let status = child.wait().expect("failed to wait for child process");
+  println!("status code: {}", status);
   Ok(())
 }
 
@@ -222,13 +248,16 @@ async fn adb_app_end_command(adb: String, device: String, app_path: String) -> R
     args = vec!["-s", &device];
   }
 
-  let output = Command::new(adb)
+  let mut child = Command::new(adb)
     .args(args)
     .args(["shell", "am", "force-stop", &app_path])
-    .output()
+    .stdout(std::process::Stdio::null())
+    .creation_flags(winapi::um::winbase::CREATE_NO_WINDOW)
+    .spawn()
     .expect("Failed to execute command");
 
-  println!("status code: {}", output.status);
+  let status = child.wait().expect("failed to wait for child process");
+  println!("status code: {}", status);
   Ok(())
 }
 
@@ -240,13 +269,16 @@ async fn adb_touchscreen_swipe_command(adb: String, device: String, sx: String, 
     args = vec!["-s", &device];
   }
 
-  let output = Command::new(adb)
+  let mut child = Command::new(adb)
     .args(args)
     .args(["shell", "input", "touchscreen", "swipe", &sx, &sy, &ex, &ey, &ms])
-    .output()
+    .stdout(std::process::Stdio::null())
+    .creation_flags(winapi::um::winbase::CREATE_NO_WINDOW)
+    .spawn()
     .expect("Failed to execute command");
 
-  println!("status code: {}", output.status);
+  let status = child.wait().expect("failed to wait for child process");
+  println!("status code: {}", status);
   Ok(())
 }
 
@@ -258,13 +290,16 @@ async fn adb_touchscreen_tap_command(adb: String, device: String, x: String, y: 
     args = vec!["-s", &device];
   }
 
-  let output = Command::new(adb)
+  let mut child = Command::new(adb)
     .args(args)
     .args(["shell", "input", "touchscreen", "tap", &x, &y])
-    .output()
+    .stdout(std::process::Stdio::null())
+    .creation_flags(winapi::um::winbase::CREATE_NO_WINDOW)
+    .spawn()
     .expect("Failed to execute command");
 
-  println!("status code: {}", output.status);
+  let status = child.wait().expect("failed to wait for child process");
+  println!("status code: {}", status);
   Ok(())
 }
 
@@ -276,13 +311,16 @@ async fn adb_input_text_command(adb: String, device: String, text: String) -> Re
     args = vec!["-s", &device];
   }
 
-  let output = Command::new(adb)
+  let mut child = Command::new(adb)
     .args(args)
     .args(["shell", "input", "text", &text])
-    .output()
+    .stdout(std::process::Stdio::null())
+    .creation_flags(winapi::um::winbase::CREATE_NO_WINDOW)
+    .spawn()
     .expect("Failed to execute command");
 
-  println!("status code: {}", output.status);
+  let status = child.wait().expect("failed to wait for child process");
+  println!("status code: {}", status);
   Ok(())
 }
 
@@ -294,13 +332,16 @@ async fn adb_input_keyevent_command(adb: String, device: String, keycode: String
     args = vec!["-s", &device];
   }
 
-  let output = Command::new(adb)
+  let mut child = Command::new(adb)
     .args(args)
     .args(["shell", "input", "keyevent", &keycode])
-    .output()
+    .stdout(std::process::Stdio::null())
+    .creation_flags(winapi::um::winbase::CREATE_NO_WINDOW)
+    .spawn()
     .expect("Failed to execute command");
 
-  println!("status code: {}", output.status);
+  let status = child.wait().expect("failed to wait for child process");
+  println!("status code: {}", status);
   Ok(())
 }
 
@@ -314,10 +355,12 @@ async fn adb_touchscreen_img_command(adb: String, device: String, project_name: 
     img = imgcodecs::imdecode(input_array, imgcodecs::IMREAD_COLOR).unwrap();
   }
   
+  let document_dir = dirs::document_dir().unwrap();
+  let template_dir = format!("{}/android-automation-tool/project/{}/{}", &document_dir.display(), project_name, img_name);
+  println!("adb_touchscreen_img_command: {}", template_dir);
+
   // テンプレートマッチングを実行するための画像とテンプレート画像を読み込みます。
-  let project_path = format!("./project/{}/{}", project_name, img_name);
-  println!("adb_touchscreen_img_command: {}", &project_path);
-  let template = imgcodecs::imread(&project_path, imgcodecs::IMREAD_COLOR).unwrap();
+  let template = imgcodecs::imread(&template_dir, imgcodecs::IMREAD_COLOR).unwrap();
 
   // 画像のグレースケール化を行います。
   let mut gray_img = core::Mat::default();
@@ -352,19 +395,21 @@ async fn adb_touchscreen_img_command(adb: String, device: String, project_name: 
 
 #[tauri::command]
 async fn adb_save_img_command(project_name: String, file_name: String) -> Result<(), String> {
-  let path = format!("./project/{}/img_save", project_name);
-  let folder_path = Path::new(&path);
+  
+  let document_dir = dirs::document_dir().unwrap();
+  let folder_dir = format!("{}/android-automation-tool/project/{}/img_save", &document_dir.display(), project_name);
+
+  let folder_path = Path::new(&folder_dir);
   if folder_path.exists() == false || folder_path.is_dir() == false {
-    fs::create_dir(path).unwrap();
+    fs::create_dir(&folder_dir).unwrap();
   }
 
   let img: image::DynamicImage;
-  unsafe {
-    img = image::load_from_memory(&SCREEN_IMG_BUFFER).unwrap();
-  }
+  unsafe {img = image::load_from_memory(&SCREEN_IMG_BUFFER).unwrap();}
   
-  let file_path = format!("./project/{}/img_save/{}", project_name, file_name);
-  image::DynamicImage::save(&img, &file_path).unwrap();
+  let file_dir = format!("{}/android-automation-tool/project/{}/img_save/{}", &document_dir.display(), project_name, file_name);
+  println!("adb_save_img_command: {}", file_dir);
+  image::DynamicImage::save(&img, &file_dir).unwrap();
   Ok(())
 }
 

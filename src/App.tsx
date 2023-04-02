@@ -234,14 +234,12 @@ function App() {
     })();
 
     (async () => {
-      const filesJson: string = await tauri.invoke('img_get_file_name_command', { projectName: projectName });
-      const files: string[] = JSON.parse(filesJson);
+      const files: string[] = await tauri.invoke('img_get_file_name_command', { projectName: projectName });
       files.sort(((a, b) => {
         if (a < b) return 1;
         if (a > b) return -1;
         return 0;
       }));
-      console.log(files);
 
       const readedImgs: ImageModel[] = [];
       for (const fileName of files) {
@@ -260,7 +258,6 @@ function App() {
   const savePython = async () => {
     const workspace = blocklyComponentRef.current?.getWorkspace();
     const code = pythonGenerator.workspaceToCode(workspace);
-    console.log(code);
 
     const contents = `
 # This Python file uses the following encoding: utf-8

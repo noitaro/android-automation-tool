@@ -49,7 +49,6 @@ export const DeviceSelectComponent = React.forwardRef((props: { sx: any, adbPath
       });
 
       if (tmp.length >= 1) {
-        console.log(tmp);
         setDevices(tmp);
         setAge(tmp[0]);
       }
