@@ -25,7 +25,6 @@ export const DeviceSelectComponent = React.forwardRef((props: { sx: any, adbPath
   }, [age]);
 
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null);
-
   const open = Boolean(anchorEl);
   const id = open ? 'simple-popover' : undefined;
 
@@ -74,8 +73,8 @@ export const DeviceSelectComponent = React.forwardRef((props: { sx: any, adbPath
       </Button>
       <Popover id={id} open={open} anchorEl={anchorEl} onClose={() => { setAnchorEl(null); }} anchorOrigin={{ vertical: 'bottom', horizontal: 'center', }} transformOrigin={{ vertical: 'top', horizontal: 'center', }}>
         <Box sx={{ m: 1 }}>
-          <LoadingButton size="small" variant="outlined" loading={loading} fullWidth sx={{ mb: 1 }} onClick={clickedReload}>端末リスト最新化</LoadingButton>
-          <FormControl fullWidth size="small">
+          <LoadingButton size="small" variant="outlined" loading={loading} fullWidth onClick={clickedReload}>端末リスト最新化</LoadingButton>
+          <FormControl fullWidth size="small" sx={{ mt: 1 }}>
             <InputLabel size="small">端末</InputLabel>
             <Select value={age} label="端末" onChange={(event) => { setAge(event.target.value as string); }} size="small">
               {devices.map((device) => (

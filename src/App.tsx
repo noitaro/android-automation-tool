@@ -9,6 +9,7 @@ import { tauri } from '@tauri-apps/api';
 
 import Blockly from 'blockly/core';
 import { javascriptGenerator } from 'blockly/javascript';
+import { pythonGenerator } from 'blockly/python';
 import { Block, Value, Field, Shadow, Category, Sep } from './Blockly';
 import './blocks/customblocks';
 import './generator/generator';
@@ -24,6 +25,7 @@ import { AdbManager } from './AdbManager';
 import { ImageModel } from './ImageModel';
 import { DeviceSelectComponent, DeviceSelectComponentHandles } from './DeviceSelectComponent';
 import { LeftMenuComponent } from './LeftMenuComponent';
+import { MoreComponent } from './MoreComponent';
 hljs.registerLanguage('javascript', javascript);
 
 let interpreterRunning = false;
@@ -109,8 +111,10 @@ function App() {
   const blocklyComponentRef = React.useRef<BlocklyComponentHandles>(null);
 
   const InterpreterInit = (interpreter: any, globalObject: any) => {
+    if (projectName == "") return;
+
     const device = deviceSelectComponentRef.current?.getDevice() ?? "";
-    const adb = new AdbManager(adbPath, device);
+    const adb = new AdbManager(adbPath, device, projectName);
     const workspace = blocklyComponentRef.current?.getWorkspace();
 
     const aapo = interpreter.nativeToPseudo({});
@@ -254,11 +258,31 @@ function App() {
 
   }, [projectName]);
 
+  const savePython = async () => {
+    const workspace = blocklyComponentRef.current?.getWorkspace();
+    const code = pythonGenerator.workspaceToCode(workspace);
+    console.log(code);
+
+    const contents = `
+# This Python file uses the following encoding: utf-8
+
+# pip install android-auto-play-opencv
+import android_auto_play_opencv as am
+import datetime # 日時を取得するために必要
+
+aapo = am.AapoManager(r'${adbPath}')
+
+${code}
+    `;
+    
+    await tauri.invoke('python_file_write_command', { projectName: projectName, contents: contents });
+  }
+
   return (
     <>
       <AppBar>
         <Toolbar>
-          <IconButton size="large" edge="start" color="inherit" aria-label="menu" sx={{ mr: 2 }} onClick={() => { setOpenDrawer(true); }}>
+          <IconButton size="large" edge="start" color="inherit" sx={{ mr: 2 }} onClick={() => { setOpenDrawer(true); }}>
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>アンドロイド自動操作ツール</Typography>
@@ -266,6 +290,7 @@ function App() {
           <DeviceSelectComponent ref={deviceSelectComponentRef} sx={{ ml: 1 }} adbPath={adbPath} setDevice={setDevice} />
           <LoadingButton variant="contained" disableElevation color="success" startIcon={<PlayArrowIcon />} sx={{ ml: 1 }} onClick={clickedExecute} disabled={running} loading={running}>実行</LoadingButton>
           <Button variant="contained" disableElevation color="error" startIcon={<StopIcon />} sx={{ ml: 1 }} onClick={clickedStop} disabled={!running}>停止</Button>
+          <MoreComponent sx={{ ml: 2 }} savePython={savePython} />
         </Toolbar>
       </AppBar>
       <LeftMenuComponent open={openDrawer} setOpen={setOpenDrawer} setProject={setProjectName} projectName={projectName} />

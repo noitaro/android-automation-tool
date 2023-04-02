@@ -6,6 +6,7 @@ use std::io::{Read, Write};
 use std::fs;
 use std::fs::File;
 use std::path::Path;
+use std::path::PathBuf;
 use serde_json::json;
 use opencv::{imgproc, imgcodecs, core};
 use opencv::prelude::MatTraitConst;
@@ -108,6 +109,16 @@ async fn setting_file_write_command(project_name: String, contents: String) -> R
   println!("setting_file_write_command: {}", project_name);
 
   let path = format!("./project/{}/setting.json", project_name);
+  let mut file = File::create(path).expect("failed to create file");
+  file.write_all(contents.as_bytes()).unwrap();
+  Ok(())
+}
+
+#[tauri::command]
+async fn python_file_write_command(project_name: String, contents: String) -> Result<(), String> {
+  println!("python_file_write_command: {}", project_name);
+
+  let path = format!("./project/{}/main.py", project_name);
   let mut file = File::create(path).expect("failed to create file");
   file.write_all(contents.as_bytes()).unwrap();
   Ok(())
@@ -280,7 +291,7 @@ async fn adb_input_keyevent_command(adb: String, device: String, keycode: String
 }
 
 #[tauri::command]
-async fn adb_touchscreen_img_command(adb: String, device: String, img_path: String, clickable: bool) -> Result<bool, String> {
+async fn adb_touchscreen_img_command(adb: String, device: String, project_name: String, img_name: String, clickable: bool) -> Result<bool, String> {
   
   let img: core::Mat;
   unsafe {
@@ -290,7 +301,9 @@ async fn adb_touchscreen_img_command(adb: String, device: String, img_path: Stri
   }
   
   // テンプレートマッチングを実行するための画像とテンプレート画像を読み込みます。
-  let template = imgcodecs::imread(&img_path, imgcodecs::IMREAD_COLOR).unwrap();
+  let project_path = format!("./project/{}/{}", project_name, img_name);
+  println!("adb_touchscreen_img_command: {}", &project_path);
+  let template = imgcodecs::imread(&project_path, imgcodecs::IMREAD_COLOR).unwrap();
 
   // 画像のグレースケール化を行います。
   let mut gray_img = core::Mat::default();
@@ -350,6 +363,7 @@ fn main() {
       adb_screencap_command, 
       setting_file_read_command,
       setting_file_write_command,
+      python_file_write_command,
       img_save_command,
       img_get_file_name_command,
       img_get_file_src_command,

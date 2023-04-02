@@ -4,10 +4,12 @@ export class AdbManager {
 
   adb: string;
   device: string;
+  projectName: string;
 
-  constructor(adb: string, device: string) {
+  constructor(adb: string, device: string, projectName: string) {
     this.adb = adb;
     this.device = device;
+    this.projectName = projectName;
   }
 
   getScreencap = async () => {
@@ -61,9 +63,9 @@ export class AdbManager {
     }
   }
 
-  checkScreenImg = async (imgPath: string) => {
+  checkScreenImg = async (imgName: string) => {
     try {
-      const result: boolean = await tauri.invoke('adb_touchscreen_img_command', { adb: this.adb, device: this.device, imgPath: imgPath, clickable: false });
+      const result: boolean = await tauri.invoke('adb_touchscreen_img_command', { adb: this.adb, device: this.device, projectName: this.projectName, imgName: imgName, clickable: false });
       return result;
     } catch (error) {
       console.error(error);
@@ -71,9 +73,9 @@ export class AdbManager {
     }
   }
 
-  touchScreenImg = async (imgPath: string) => {
+  touchScreenImg = async (imgName: string) => {
     try {
-      const result: boolean = await tauri.invoke('adb_touchscreen_img_command', { adb: this.adb, device: this.device, imgPath: imgPath, clickable: true });
+      const result: boolean = await tauri.invoke('adb_touchscreen_img_command', { adb: this.adb, device: this.device, projectName: this.projectName, imgName: imgName, clickable: true });
       return result;
     } catch (error) {
       console.error(error);

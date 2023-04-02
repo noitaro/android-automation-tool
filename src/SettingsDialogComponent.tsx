@@ -43,7 +43,7 @@ export default function SettingsDialogComponent(props: {
   const clickedScreenCapture = async () => {
     setLoading(true);
 
-    const adb = new AdbManager(adbPath, device);
+    const adb = new AdbManager(adbPath, device, projectName);
     // const aa = await adb.devices();
     const screencap = await adb.getScreencap();
     if (screencap != null) {
@@ -69,7 +69,7 @@ export default function SettingsDialogComponent(props: {
       setImgs([imageModel, ...imgs]);
 
       const base64 = img.src.replace('data:image/png;base64,', '');
-      await tauri.invoke('img_save_command', { base64: base64, fileName: imageModel.name });
+      await tauri.invoke('img_save_command', { projectName: projectName, base64: base64, fileName: imageModel.name });
     }
   }
 
