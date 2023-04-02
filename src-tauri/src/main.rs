@@ -6,7 +6,6 @@ use std::io::{Read, Write};
 use std::fs;
 use std::fs::File;
 use std::path::Path;
-use std::path::PathBuf;
 use serde_json::json;
 use opencv::{imgproc, imgcodecs, core};
 use opencv::prelude::MatTraitConst;
