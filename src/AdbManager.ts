@@ -16,7 +16,7 @@ export class AdbManager {
       const base64String = binary.toString('base64');
       return base64String;
     } catch (error) {
-      console.log(error);
+      console.error(error);
       return null;
     }
   }
@@ -25,7 +25,7 @@ export class AdbManager {
     try {
       await tauri.invoke('adb_touchscreen_tap_command', { adb: this.adb, device: this.device, x: x, y: y });
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   }
 
@@ -33,7 +33,7 @@ export class AdbManager {
     try {
       await tauri.invoke('adb_touchscreen_swipe_command', { adb: this.adb, device: this.device, sx: x, sy: y, ex: x, ey: y, ms: ms });
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   }
 
@@ -41,7 +41,7 @@ export class AdbManager {
     try {
       await tauri.invoke('adb_touchscreen_swipe_command', { adb: this.adb, device: this.device, sx: sx, sy: sy, ex: ex, ey: ey, ms: ms });
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   }
 
@@ -49,7 +49,7 @@ export class AdbManager {
     try {
       await tauri.invoke('adb_input_text_command', { adb: this.adb, device: this.device, text: text });
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   }
 
@@ -57,7 +57,7 @@ export class AdbManager {
     try {
       await tauri.invoke('adb_input_keyevent_command', { adb: this.adb, device: this.device, keycode: keycode });
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   }
 
@@ -66,7 +66,7 @@ export class AdbManager {
       const result: boolean = await tauri.invoke('adb_touchscreen_img_command', { adb: this.adb, device: this.device, imgPath: imgPath, clickable: false });
       return result;
     } catch (error) {
-      console.log(error);
+      console.error(error);
       return false;
     }
   }
@@ -76,7 +76,7 @@ export class AdbManager {
       const result: boolean = await tauri.invoke('adb_touchscreen_img_command', { adb: this.adb, device: this.device, imgPath: imgPath, clickable: true });
       return result;
     } catch (error) {
-      console.log(error);
+      console.error(error);
       return false;
     }
   }
@@ -86,7 +86,7 @@ export class AdbManager {
       const result: boolean = await tauri.invoke('adb_save_img_command', { adb: this.adb, device: this.device, savePath: savePath });
       return result;
     } catch (error) {
-      console.log(error);
+      console.error(error);
       return false;
     }
   }
@@ -95,7 +95,7 @@ export class AdbManager {
     try {
       await tauri.invoke('adb_app_start_command', { adb: this.adb, device: this.device, appPath: appPath });
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   }
   
@@ -103,7 +103,7 @@ export class AdbManager {
     try {
       await tauri.invoke('adb_app_end_command', { adb: this.adb, device: this.device, appPath: appPath });
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   }
   

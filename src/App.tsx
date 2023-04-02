@@ -1,5 +1,5 @@
 import React from 'react';
-import { AppBar, Box, Button, IconButton, Toolbar, Typography } from '@mui/material';
+import { AppBar, Backdrop, Box, Button, IconButton, Toolbar, Typography } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import SettingsIcon from '@mui/icons-material/Settings';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
@@ -32,7 +32,6 @@ function App() {
   const [open, setOpen] = React.useState(false);
   const [running, setRunning] = React.useState(false);
   const [javaScriptCode, setJavaScriptCode] = React.useState('');
-  const [adbPath, setAdbPath] = React.useState("");
   const [device, setDevice] = React.useState("");
   const [initialXml, setInitialXml] = React.useState("");
   const [imgs, setImgs] = React.useState<ImageModel[]>([]);
@@ -48,6 +47,20 @@ function App() {
     }
   }, []);
 
+  const [adbPath, setAdbPath] = React.useState("");
+  React.useEffect(() => {
+    if (adbPath == "") return;
+
+    (async () => {
+      const settingJson: string = await tauri.invoke('setting_file_read_command', { projectName: projectName });
+      const setting: SettingModel = JSON.parse(settingJson);
+      if (setting.adbPath == adbPath) return;
+
+      setting.adbPath = adbPath;
+      await tauri.invoke('setting_file_write_command', { projectName: projectName, contents: JSON.stringify(setting) });
+    })();
+  }, [adbPath]);
+
   // JavaScriptコードが変わったら、ファイル保存
   const [javaScriptCodeTimeout, setJavaScriptCodeTimeout] = React.useState<NodeJS.Timeout | null>(null);
   React.useEffect(() => {
@@ -58,17 +71,18 @@ function App() {
 
     if (javaScriptCode == "") return;
     if (projectName == "") return;
+    const tmpProjectName = JSON.parse(JSON.stringify(projectName));
 
     const timeout = setTimeout(async () => {
       const workspace = blocklyComponentRef.current?.getWorkspace();
       const dom = Blockly.Xml.workspaceToDom(workspace);
       const xml = Blockly.Xml.domToPrettyText(dom);
 
-      const settingJson: string = await tauri.invoke('setting_file_read_command', { projectName: projectName });
+      const settingJson: string = await tauri.invoke('setting_file_read_command', { projectName: tmpProjectName });
       const setting: SettingModel = JSON.parse(settingJson);
       if (setting.xml === xml) return;
       setting.xml = xml;
-      await tauri.invoke('setting_file_write_command', { contents: JSON.stringify(setting) });
+      await tauri.invoke('setting_file_write_command', { projectName: tmpProjectName, contents: JSON.stringify(setting) });
     }, 3000);
     setJavaScriptCodeTimeout(timeout);
 
@@ -203,14 +217,16 @@ function App() {
     setAdbPath("");
     setInitialXml("");
     setImgs([]);
+    const workspace = blocklyComponentRef.current?.getWorkspace();
+    workspace.clear();
 
     if (projectName == "") return;
 
     (async () => {
       const settingJson: string = await tauri.invoke('setting_file_read_command', { projectName: projectName });
       const setting: SettingModel = JSON.parse(settingJson);
-      setAdbPath(setting.adbPath);
-      setInitialXml(setting.xml);
+      setAdbPath(setting.adbPath ?? "");
+      setInitialXml(setting.xml ?? "");
     })();
 
     (async () => {
@@ -238,7 +254,6 @@ function App() {
 
   }, [projectName]);
 
-
   return (
     <>
       <AppBar>
@@ -253,7 +268,7 @@ function App() {
           <Button variant="contained" disableElevation color="error" startIcon={<StopIcon />} sx={{ ml: 1 }} onClick={clickedStop} disabled={!running}>停止</Button>
         </Toolbar>
       </AppBar>
-      <LeftMenuComponent open={openDrawer} setOpen={setOpenDrawer} setProject={setProjectName} />
+      <LeftMenuComponent open={openDrawer} setOpen={setOpenDrawer} setProject={setProjectName} projectName={projectName} />
       <BlocklyComponent ref={blocklyComponentRef} setCode={setJavaScriptCode} readOnly={false}
         trashcan={true} media={'media/'} sounds={false}
         grid={{ spacing: 20, length: 1, colour: '#888', snap: false }}

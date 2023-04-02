@@ -6,9 +6,10 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { CreateProjectComponent } from "./CreateProjectComponent";
 import { tauri } from "@tauri-apps/api";
 import ArticleIcon from '@mui/icons-material/Article';
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 
-export const LeftMenuComponent = React.forwardRef((props: { open: boolean, setOpen: React.Dispatch<React.SetStateAction<boolean>>, setProject: (projectName: string) => void }, ref) => {
-  const { open, setOpen, setProject } = props;
+export const LeftMenuComponent = React.forwardRef((props: { open: boolean, setOpen: React.Dispatch<React.SetStateAction<boolean>>, setProject: (projectName: string) => void, projectName: string }, ref) => {
+  const { open, setOpen, setProject, projectName } = props;
   const [openCreateProject, setOpenCreateProject] = React.useState(false);
 
   const theme = useTheme();
@@ -61,7 +62,10 @@ export const LeftMenuComponent = React.forwardRef((props: { open: boolean, setOp
             {projectList.map((project) => (
               <ListItem key={project} disablePadding>
                 <ListItemButton onClick={() => {setProject(project);}}>
-                  <ListItemIcon><ArticleIcon /><ListItemText primary={project} /></ListItemIcon>
+                  <ListItemIcon>
+                    {projectName == project ? <KeyboardArrowRightIcon /> : null}
+                    <ListItemText primary={project} />
+                  </ListItemIcon>
                 </ListItemButton>
               </ListItem>
             ))}

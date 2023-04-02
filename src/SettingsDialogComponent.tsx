@@ -8,8 +8,8 @@ import { AdbManager } from "./AdbManager";
 import { CropperComponent, CropperComponentHandles } from "./CropperComponent";
 import { ImageModel } from "./ImageModel";
 import { tauri } from '@tauri-apps/api';
-import { SettingModel } from "./SettingModel";
 import { open } from '@tauri-apps/api/dialog';
+import { LoadingButton } from "@mui/lab";
 
 const Transition = React.forwardRef(function Transition(
   props: TransitionProps & {
@@ -39,13 +39,18 @@ export default function SettingsDialogComponent(props: {
     }
   }, []);
 
+  const [loading, setLoading] = React.useState(false);
   const clickedScreenCapture = async () => {
+    setLoading(true);
+
     const adb = new AdbManager(adbPath, device);
     // const aa = await adb.devices();
     const screencap = await adb.getScreencap();
     if (screencap != null) {
       setImgSrc(`data:image/png;base64,${screencap}`);
     }
+
+    setLoading(false);
   }
 
   const [imgSrc, setImgSrc] = React.useState("data:image/png;base64,");
@@ -75,15 +80,11 @@ export default function SettingsDialogComponent(props: {
     const selected = await open({ multiple: false, title: "adb を選択", defaultPath: "adb" });
     if (Array.isArray(selected)) {
       // user selected multiple files
-    } else if (selected === null) {
+    } else if (selected == null) {
       // user cancelled the selection
     } else {
       // user selected a single file
       setAdbPath(selected);
-      const settingJson: string = await tauri.invoke('setting_file_read_command', { projectName: projectName });
-      const setting: SettingModel = JSON.parse(settingJson);
-      setting.adbPath = selected;
-      await tauri.invoke('setting_file_write_command', { contents: JSON.stringify(setting) });
     }
   };
 
@@ -106,7 +107,7 @@ export default function SettingsDialogComponent(props: {
             <TextField value={adbPath} variant="outlined" size="small" fullWidth InputProps={{ readOnly: true, }} />
           </Grid>
         </Grid>
-        <Button variant="contained" disableElevation onClick={clickedScreenCapture}>アンドロイドのスクリーンショットを取得</Button>
+        <LoadingButton variant="contained" disableElevation onClick={clickedScreenCapture} loading={loading}>アンドロイドのスクリーンショットを取得</LoadingButton>
         <Box sx={{ border: "solid 1px rgba(0, 0, 0, 0.23)" }}>
           <CropperComponent ref={cropperComponentRef} src={imgSrc} height="400px" width="100%" />
         </Box>

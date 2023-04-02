@@ -48,13 +48,16 @@ async fn project_list_command() -> Result<Vec<String>, String> {
 
 #[tauri::command]
 async fn adb_devices_command(adb: String) -> Result<String, String> {
-  let output = Command::new(adb)
-    .args(["devices"])
-    .output()
-    .expect("Failed to execute command");
-
-  let devices = format!("{}", String::from_utf8_lossy(&output.stdout));
-  Ok(devices)
+  let result = Command::new(adb).args(["devices"]).output();
+  match result {
+    Ok(output) => {
+      let devices = format!("{}", String::from_utf8_lossy(&output.stdout));
+      Ok(devices)
+    }
+    Err(error) => {
+      Err(error.to_string())
+    }
+  }
 }
 
 #[tauri::command]
@@ -65,32 +68,45 @@ async fn adb_screencap_command(adb: String, device: String) -> Result<String, St
     args = vec!["-s", &device];
   }
 
-  let output = Command::new(adb)
-    .args(args)
-    .args(["exec-out", "screencap", "-p"])
-    .output()
-    .expect("Failed to execute command");
-
-  let buffer = output.stdout;
-  unsafe {
-    SCREEN_IMG_BUFFER = buffer.clone();
+  let result = Command::new(adb).args(args).args(["exec-out", "screencap", "-p"]).output();
+  match result {
+    Ok(output) => {
+      let buffer = output.stdout;
+      unsafe {SCREEN_IMG_BUFFER = buffer.clone();}
+      let encode_bin: String = encode(&buffer);
+      Ok(encode_bin)
+    }
+    Err(error) => {
+      Err(error.to_string())
+    }
   }
-
-  let encode_bin: String = encode(&buffer);
-  Ok(encode_bin)
 }
 
 #[tauri::command]
 async fn setting_file_read_command(project_name: String) -> Result<String, String> {
+  println!("setting_file_read_command: {}", project_name);
+  
   let path = format!("./project/{}/setting.json", project_name);
-  let mut file = File::open(path).unwrap();
+
   let mut contents = String::new();
-  file.read_to_string(&mut contents).unwrap();
+
+  let result = File::open(path);
+  match result {
+    Ok(mut file) => {
+      file.read_to_string(&mut contents).unwrap();
+    }
+    Err(_) => {
+      setting_file_write_command(project_name, "{}".to_string()).await.unwrap();
+    }
+  }
+
   Ok(contents)
 }
 
 #[tauri::command]
 async fn setting_file_write_command(project_name: String, contents: String) -> Result<(), String> {
+  println!("setting_file_write_command: {}", project_name);
+
   let path = format!("./project/{}/setting.json", project_name);
   let mut file = File::create(path).expect("failed to create file");
   file.write_all(contents.as_bytes()).unwrap();
@@ -100,6 +116,8 @@ async fn setting_file_write_command(project_name: String, contents: String) -> R
 #[tauri::command]
 async fn img_save_command(project_name: String, base64: String, file_name: String) -> Result<(), String> {
   let path = format!("./project/{}/img", project_name);
+  println!("img_save_command: {}", path);
+
   let folder_path = Path::new(&path);
   if folder_path.exists() == false || folder_path.is_dir() == false {
       fs::create_dir("img").unwrap();
@@ -114,7 +132,13 @@ async fn img_save_command(project_name: String, base64: String, file_name: Strin
 #[tauri::command]
 async fn img_get_file_name_command(project_name: String) -> Result<String, String> {
   let path = format!("./project/{}/img", project_name);
+  println!("img_get_file_name_command: {}", path);
+
   let img_path = Path::new(&path);
+  if img_path.exists() == false || img_path.is_dir() == false {
+      fs::create_dir(img_path).unwrap();
+  }
+
   let entries = fs::read_dir(img_path).unwrap();
 
   let mut vec = Vec::new();
