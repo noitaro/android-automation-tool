@@ -26,9 +26,8 @@ import './BlocklyComponent.css';
 
 import Blockly from 'blockly/core';
 import { javascriptGenerator } from 'blockly/javascript';
-import locale from 'blockly/msg/en';
+import locale from 'blockly/msg/ja';
 import 'blockly/blocks';
-import { Backdrop } from '@mui/material';
 
 Blockly.setLocale(locale);
 
