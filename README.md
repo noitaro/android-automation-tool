@@ -60,6 +60,8 @@ PC内の adb.exe を指定する。
 - 保存した Pythonスクリプトを使うことで、Python のみで実行することができます。
 - 実行方法については「[https://noitalog.tokyo/android-auto-play-opencv/](https://noitalog.tokyo/android-auto-play-opencv/)」の記事をご覧ください。
 
+## Webサイト
+[https://noitalog.tokyo/android-automation-tool/](https://noitalog.tokyo/android-automation-tool/)
 
 ## 開発
 ### start
