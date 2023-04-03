@@ -51,6 +51,8 @@ PC内の adb.exe を指定する。
 
 ![image](https://user-images.githubusercontent.com/52857466/229407193-6fa7da63-03d3-4e18-8d34-4a4aa0ebabd4.png)
 
+- 作った自動操作ロジックやトリミングした画像等が保存さしてあります。
+
 ### Python 出力について
 右上ボタンから Python 出力することができます。
 
