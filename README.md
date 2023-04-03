@@ -7,7 +7,7 @@ Androidの自動化を簡単に行うことができるアプリ
 - 事前にタップしたい箇所を登録することで、画面内を自動でタップすることができる。
 - 実機はもちろんのこと、Androidエミュレーター（[NoxPlayer](https://jp.bignox.com/) 等）に対応
 - マウスカーソルやフォーカスを奪われないため、裏で回し続けることができる。
-- 作った自動操作処理は Python のみでも実行することができる。
+- 作った自動操作ロジックは Python のみでも実行することができる。
 
 ## 準備
 + このツールを使うには adb.exe が必須です。
@@ -38,7 +38,7 @@ PC内の adb.exe を指定する。
 
 ![image](https://user-images.githubusercontent.com/52857466/229406255-c068fc23-b2a5-40b4-954c-91cc43bd0d6d.png)
 
-## 3.自動操作設定
+## 3.自動操作ロジック作成
 ブロックを使って、自動操作の流れを作る。
 
 ![image](https://user-images.githubusercontent.com/52857466/229396926-2279ab65-34d2-46cd-bd6b-cf107974d09a.png)
