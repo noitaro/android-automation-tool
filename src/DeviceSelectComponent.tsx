@@ -10,8 +10,8 @@ export interface DeviceSelectComponentHandles {
   getDevice(): string;
 }
 
-export const DeviceSelectComponent = React.forwardRef((props: { sx: any, adbPath: string, setDevice: React.Dispatch<React.SetStateAction<string>> }, ref) => {
-  const { sx, adbPath, setDevice } = props;
+export const DeviceSelectComponent = React.forwardRef((props: { sx: any, adbPath: string, setDevice: React.Dispatch<React.SetStateAction<string>>, projectName: String }, ref) => {
+  const { sx, adbPath, setDevice, projectName } = props;
   const [age, setAge] = React.useState('');
 
   React.useImperativeHandle(ref, () => ({
@@ -67,7 +67,7 @@ export const DeviceSelectComponent = React.forwardRef((props: { sx: any, adbPath
 
   return (
     <>
-      <Button variant="contained" disableElevation aria-describedby={id} onClick={(event) => { setAnchorEl(event.currentTarget); }} sx={sx}>
+      <Button variant="contained" disableElevation aria-describedby={id} onClick={(event) => { setAnchorEl(event.currentTarget); }} sx={sx} disabled={projectName == ""}>
         <DeviceUnknownIcon />
       </Button>
       <Popover id={id} open={open} anchorEl={anchorEl} onClose={() => { setAnchorEl(null); }} anchorOrigin={{ vertical: 'bottom', horizontal: 'center', }} transformOrigin={{ vertical: 'top', horizontal: 'center', }}>

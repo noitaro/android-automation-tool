@@ -282,11 +282,11 @@ ${code}
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>アンドロイド自動操作ツール</Typography>
-          <Button variant="contained" disableElevation color="secondary" startIcon={<SettingsIcon />} sx={{ ml: 1 }} onClick={() => { setOpen(true); }}>自動操作設定</Button>
-          <DeviceSelectComponent ref={deviceSelectComponentRef} sx={{ ml: 1 }} adbPath={adbPath} setDevice={setDevice} />
-          <LoadingButton variant="contained" disableElevation color="success" startIcon={<PlayArrowIcon />} sx={{ ml: 1 }} onClick={clickedExecute} disabled={running} loading={running}>実行</LoadingButton>
+          <Button variant="contained" disableElevation color="secondary" startIcon={<SettingsIcon />} sx={{ ml: 1 }} onClick={() => { setOpen(true); }} disabled={projectName == ""}>自動操作設定</Button>
+          <DeviceSelectComponent ref={deviceSelectComponentRef} sx={{ ml: 1 }} adbPath={adbPath} setDevice={setDevice} projectName={projectName} />
+          <LoadingButton variant="contained" disableElevation color="success" startIcon={<PlayArrowIcon />} sx={{ ml: 1 }} onClick={clickedExecute} disabled={running || projectName == ""} loading={running}>実行</LoadingButton>
           <Button variant="contained" disableElevation color="error" startIcon={<StopIcon />} sx={{ ml: 1 }} onClick={clickedStop} disabled={!running}>停止</Button>
-          <MoreComponent sx={{ ml: 2 }} savePython={savePython} />
+          <MoreComponent sx={{ ml: 2 }} savePython={savePython} projectName={projectName} />
         </Toolbar>
       </AppBar>
       <LeftMenuComponent open={openDrawer} setOpen={setOpenDrawer} setProject={setProjectName} projectName={projectName} />

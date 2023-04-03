@@ -28,6 +28,24 @@ async fn project_create_command(project_name: String) -> Result<(), String> {
 }
 
 #[tauri::command]
+async fn project_open_folder_command(project_name: String) -> Result<(), String> {
+
+  let document_dir = dirs::document_dir().unwrap();
+  let project_dir = format!("{}\\android-automation-tool\\project\\{}", &document_dir.display(), project_name);
+  println!("project_open_folder_command: {}", project_dir);
+
+  let mut child = Command::new("explorer")
+    .args([project_dir])
+    .stdout(std::process::Stdio::null())
+    .creation_flags(winapi::um::winbase::CREATE_NO_WINDOW)
+    .spawn()
+    .expect("Failed to execute command");
+
+  child.wait().expect("failed to wait for child process");
+  Ok(())
+}
+
+#[tauri::command]
 async fn project_list_command() -> Result<Vec<String>, String> {
   
   let document_dir = dirs::document_dir().unwrap();
@@ -62,10 +80,10 @@ async fn project_list_command() -> Result<Vec<String>, String> {
 #[tauri::command]
 async fn adb_devices_command(adb: String) -> Result<String, String> {
   let result = Command::new(adb)
-  .args(["devices"])
-  .stdout(std::process::Stdio::piped())
-  .creation_flags(winapi::um::winbase::CREATE_NO_WINDOW)
-  .spawn();
+    .args(["devices"])
+    .stdout(std::process::Stdio::piped())
+    .creation_flags(winapi::um::winbase::CREATE_NO_WINDOW)
+    .spawn();
 
   match result {
     Ok(child) => {
@@ -89,11 +107,11 @@ async fn adb_screencap_command(adb: String, device: String) -> Result<String, St
   }
 
   let result = Command::new(adb)
-  .args(args)
-  .args(["exec-out", "screencap", "-p"])
-  .stdout(std::process::Stdio::piped())
-  .creation_flags(winapi::um::winbase::CREATE_NO_WINDOW)
-  .spawn();
+    .args(args)
+    .args(["exec-out", "screencap", "-p"])
+    .stdout(std::process::Stdio::piped())
+    .creation_flags(winapi::um::winbase::CREATE_NO_WINDOW)
+    .spawn();
 
   match result {
     Ok(child) => {
@@ -235,8 +253,7 @@ async fn adb_app_start_command(adb: String, device: String, app_path: String) ->
     .spawn()
     .expect("Failed to execute command");
 
-  let status = child.wait().expect("failed to wait for child process");
-  println!("status code: {}", status);
+  child.wait().expect("failed to wait for child process");
   Ok(())
 }
 
@@ -256,8 +273,7 @@ async fn adb_app_end_command(adb: String, device: String, app_path: String) -> R
     .spawn()
     .expect("Failed to execute command");
 
-  let status = child.wait().expect("failed to wait for child process");
-  println!("status code: {}", status);
+  child.wait().expect("failed to wait for child process");
   Ok(())
 }
 
@@ -277,8 +293,7 @@ async fn adb_touchscreen_swipe_command(adb: String, device: String, sx: String, 
     .spawn()
     .expect("Failed to execute command");
 
-  let status = child.wait().expect("failed to wait for child process");
-  println!("status code: {}", status);
+  child.wait().expect("failed to wait for child process");
   Ok(())
 }
 
@@ -298,8 +313,7 @@ async fn adb_touchscreen_tap_command(adb: String, device: String, x: String, y: 
     .spawn()
     .expect("Failed to execute command");
 
-  let status = child.wait().expect("failed to wait for child process");
-  println!("status code: {}", status);
+  child.wait().expect("failed to wait for child process");
   Ok(())
 }
 
@@ -319,8 +333,7 @@ async fn adb_input_text_command(adb: String, device: String, text: String) -> Re
     .spawn()
     .expect("Failed to execute command");
 
-  let status = child.wait().expect("failed to wait for child process");
-  println!("status code: {}", status);
+  child.wait().expect("failed to wait for child process");
   Ok(())
 }
 
@@ -340,8 +353,7 @@ async fn adb_input_keyevent_command(adb: String, device: String, keycode: String
     .spawn()
     .expect("Failed to execute command");
 
-  let status = child.wait().expect("failed to wait for child process");
-  println!("status code: {}", status);
+  child.wait().expect("failed to wait for child process");
   Ok(())
 }
 
@@ -417,6 +429,7 @@ fn main() {
   tauri::Builder::default()
     .invoke_handler(tauri::generate_handler![
       project_create_command,
+      project_open_folder_command,
       project_list_command,
       adb_devices_command,
       adb_screencap_command, 
