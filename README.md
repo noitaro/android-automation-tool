@@ -7,6 +7,7 @@ Androidの自動化を簡単に行うことができるアプリ
 - 事前にタップしたい箇所を登録することで、画面内を自動でタップすることができる。
 - 実機はもちろんのこと、Androidエミュレーター（[NoxPlayer](https://jp.bignox.com/) 等）に対応
 - マウスカーソルやフォーカスを奪われないため、裏で回し続けることができる。
+- 作ったロジックを Python のみで実行することができる。
 
 ## 準備
 + このツールを使うには adb.exe が必須です。
@@ -42,17 +43,36 @@ PC内の adb.exe を指定する。
 
 ![image](https://user-images.githubusercontent.com/52857466/229396926-2279ab65-34d2-46cd-bd6b-cf107974d09a.png)
 
-## start
+## その他機能
+
+### プロジェクトについて
+プロジェクトはマイドキュメント内に保存されます。
+- C:\Users\{ユーザー名}\Documents\android-automation-tool\
+
+![image](https://user-images.githubusercontent.com/52857466/229407193-6fa7da63-03d3-4e18-8d34-4a4aa0ebabd4.png)
+
+### Python 出力について
+右上ボタンから Python 出力することができます。
+
+![image](https://user-images.githubusercontent.com/52857466/229407488-16d58d58-411c-4988-8e87-45789ef75a0a.png)
+
+- 保存先はプロジェクトフォルダー内に「main.py」で保存されます。
+- 保存した Pythonスクリプトを使うことで、Python のみで実行することができます。
+- 実行方法については「[https://noitalog.tokyo/android-auto-play-opencv/](https://noitalog.tokyo/android-auto-play-opencv/)」の記事をご覧ください。
+
+
+## 開発
+### start
 ```Bash
 npm run tauri dev
 ```
 
-## Debug Build
+### Debug Build
 ```Bash
 npm run tauri build --debug
 ```
 
-## App Publishing
+### App Publishing
 ```Bash
 npm run tauri build
 ```
