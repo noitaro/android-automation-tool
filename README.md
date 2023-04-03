@@ -20,6 +20,27 @@ adb.exe は SDK Platform-Tools に含まれています。
 
 ## 使い方
 
+### 1.プロジェクト作成
+左メニューから新規プロジェクトを作成する。
+
+![image](https://user-images.githubusercontent.com/52857466/229405446-9b4c7d31-490c-4903-a470-b50bf5debc0d.png)
+
+### 2.自動操作設定
+
+#### adb.exe の設定
+PC内の adb.exe を指定する。
+
+![image](https://user-images.githubusercontent.com/52857466/229405895-33b02f35-a5f8-44ae-a5b1-435a4141fdd1.png)
+
+### タッチ画像の作成
+スクリーンショットを取得して、トリミング範囲を選択し保存する。
+
+![image](https://user-images.githubusercontent.com/52857466/229406255-c068fc23-b2a5-40b4-954c-91cc43bd0d6d.png)
+
+## 3.自動操作設定
+ブロックを使って、自動操作の流れを作る。
+
+![image](https://user-images.githubusercontent.com/52857466/229396926-2279ab65-34d2-46cd-bd6b-cf107974d09a.png)
 
 ## start
 ```Bash
