@@ -60,10 +60,10 @@ PC内の adb.exe を指定する。
 
 - 保存先はプロジェクトフォルダー内に「main.py」で保存されます。
 - 保存した Pythonスクリプトを使うことで、Python のみで実行することができます。
-- 実行方法については「[https://noitalog.tokyo/android-auto-play-opencv/](https://noitalog.tokyo/android-auto-play-opencv/)」の記事をご覧ください。
+- 実行方法については「[https://noitaro.github.io/android-auto-play-opencv/](https://noitaro.github.io/android-auto-play-opencv/)」の記事をご覧ください。
 
 ## Webサイト
-[https://noitalog.tokyo/android-automation-tool/](https://noitalog.tokyo/android-automation-tool/)
+[https://noitaro.github.io/android-automation-tool/](https://noitaro.github.io/android-automation-tool/)
 
 ## 開発
 ### start
